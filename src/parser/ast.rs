@@ -19,6 +19,7 @@ pub struct TableDef {
 }
 
 pub struct ColumnDef {
+    pub name: String,
     pub column_type: Option<ColumnType>,
     pub column_constraints: Vec<ColumnConstraint>,
 }

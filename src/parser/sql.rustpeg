@@ -46,8 +46,9 @@ type_name -> ColumnType
         / TEXT { ColumnType::Text }
 
 column_def -> ColumnDef
-        = column_name t:(type_name)? c:(column_constraint)* {
+        = n:column_name t:(type_name)? c:(column_constraint)* {
             ColumnDef {
+                name: n,
                 column_type: t,
                 column_constraints: c,
             }

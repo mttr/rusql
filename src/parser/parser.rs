@@ -351,7 +351,7 @@ fn parse_column_def<'input>(input: &'input str, state: &mut ParseState,
         {
             let seq_res = parse_column_name(input, state, pos);
             match seq_res {
-                Matched(pos, _) => {
+                Matched(pos, n) => {
                     {
                         let seq_res =
                             match parse_type_name(input, state, pos) {
@@ -392,7 +392,8 @@ fn parse_column_def<'input>(input: &'input str, state: &mut ParseState,
                                                                 pos);
                                                 Matched(pos,
                                                         {
-                                                            ColumnDef{column_type:
+                                                            ColumnDef{name: n,
+                                                                      column_type:
                                                                           t,
                                                                       column_constraints:
                                                                           c,}
