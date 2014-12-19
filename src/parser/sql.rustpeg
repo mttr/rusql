@@ -1,0 +1,74 @@
+// Adapted from: https://github.com/steveyen/sqld3/blob/master/sql.pegjs
+// And: https://www.sqlite.org/lang.html
+
+use super::ast::*;
+
+whitespace = [ \t\n\r]*
+
+whitespace1 = [ \t\n\r]+
+
+semicolon = ";"
+
+lparen = "("
+
+rparen = ")"
+
+comma = ","
+
+CREATE = whitespace "CREATE"
+
+TABLE = whitespace1 "TABLE"
+
+PRIMARY = whitespace1 "PRIMARY"
+
+KEY = whitespace1 "KEY"
+
+CONSTRAINT = whitespace1 "CONSTRAINT"
+
+INTEGER = whitespace1 "INTEGER"
+
+TEXT = whitespace1 "TEXT"
+
+nws_name -> String
+        = [A-Za-z0-9_]+ { match_str.to_string() }
+
+name -> String
+        = whitespace1 n:nws_name whitespace { n }
+
+table_name -> String
+        = name
+
+column_name -> String
+        = whitespace n:nws_name { n }
+
+type_name -> ColumnType
+        = INTEGER { ColumnType::Integer }
+        / TEXT { ColumnType::Text }
+
+column_def -> ColumnDef
+        = column_name t:(type_name)? c:(column_constraint)* {
+            ColumnDef {
+                column_type: t,
+                column_constraints: c,
+            }
+        }
+
+column_constraint -> ColumnConstraint
+        = (CONSTRAINT name)? (PRIMARY KEY) {
+            ColumnConstraint::PrimaryKey
+        }
+
+create_table_stmt -> RusqlStatement
+        = CREATE TABLE n:table_name whitespace lparen c:(column_def ++ comma) rparen {
+            let def = TableDef {
+                table_name: n,
+                columns: c,
+            };
+            RusqlStatement::CreateTable(def)
+          }
+
+#[export]
+rusql_stmt -> RusqlStatement
+        = whitespace s:(create_table_stmt) whitespace semicolon {
+            s
+        }
