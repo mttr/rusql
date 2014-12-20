@@ -7,45 +7,12 @@ pub mod parser {
     pub mod parser;
 }
 
+pub mod table;
+
 pub struct Rusql<'a> {
-    pub map: TreeMap<String, Table<'a>>,
+    pub map: TreeMap<String, table::Table<'a>>,
 }
 
-pub type TableEntry = Vec<parser::ast::LiteralValue>;
-
-pub struct Table<'a> {
-    pub columns: Vec<parser::ast::ColumnDef>,
-    pub entries: Vec<TableEntry>,
-}
-
-impl<'a> Table<'a> {
-    pub fn get_column_def_by_name(&'a self, name: String) -> Option<&'a parser::ast::ColumnDef> {
-        for column_def in self.columns.iter().filter(|&cols| cols.name == name) {
-            return Some(column_def);
-        }
-        None
-    }
-
-    pub fn get_column_index(&'a self, name: String) -> Option<uint> {
-        for (i, _) in self.columns.iter().filter(|&cols| cols.name == name).enumerate() {
-            return Some(i);
-        }
-        None
-    }
-
-    pub fn has_entry(&'a self, pk: int) -> bool {
-        let index = self.get_column_index("Id".to_string()).unwrap();
-
-        for entry in self.entries.iter() {
-            match entry[index] {
-                parser::ast::LiteralValue::Integer(n) if n == pk => return true,
-                _ => continue,
-            }
-        }
-
-        false
-    }
-}
 
 impl<'a> Rusql<'a> {
     pub fn new() -> Rusql<'a> {
@@ -55,12 +22,12 @@ impl<'a> Rusql<'a> {
     }
 }
 
-pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &Vec<parser::ast::ColumnDef>|) {
+pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&table::TableEntry, &Vec<parser::ast::ColumnDef>|) {
     use parser::ast::*;
     let stmt = parser::parser::rusql_stmt(sql_str.as_slice()).unwrap();
     match stmt {
         RusqlStatement::CreateTable(table_def) => {
-            db.map.insert(table_def.table_name, Table {
+            db.map.insert(table_def.table_name, table::Table {
                 columns: table_def.columns,
                 entries: Vec::new(),
             });
