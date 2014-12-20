@@ -1,9 +1,6 @@
 extern crate rusql;
 
-use rusql::exec::rusql_exec;
-use rusql::rusql::Rusql;
-use rusql::table::TableEntry;
-use rusql::parser::ast::ColumnDef;
+use rusql::{rusql_exec, Rusql, TableEntry, ColumnDef};
 
 fn main() {
     let mut db = Rusql::new();
