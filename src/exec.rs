@@ -1,9 +1,9 @@
-use table::{TableEntry, Table};
-use parser::definitions::{ColumnDef, ResultColumn, RusqlStatement, TableDef, InsertDef, SelectDef};
+use table::{TableEntry, TableHeader, Table};
+use parser::definitions::{ResultColumn, RusqlStatement, TableDef, InsertDef, SelectDef};
 use parser::parser::rusql_parse;
 use rusql::Rusql;
 
-pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &Vec<ColumnDef>|) {
+pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &TableHeader|) {
     for stmt in rusql_parse(sql_str.as_slice()).unwrap().iter() {
         match stmt {
             &RusqlStatement::CreateTable(ref table_def) => create_table(db, table_def),
@@ -15,7 +15,7 @@ pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &Vec<
 
 fn create_table(db: &mut Rusql, table_def: &TableDef) {
     db.map.insert(table_def.table_name.clone(), Table {
-        columns: table_def.columns.clone(),
+        header: table_def.columns.clone(),
         entries: Vec::new(),
     });
 }
@@ -30,14 +30,14 @@ fn insert(db: &mut Rusql, insert_def: &InsertDef) {
     }
 }
 
-fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableEntry, &Vec<ColumnDef>|) {
+fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableEntry, &TableHeader|) {
     match select_def.result_column {
         ResultColumn::Asterisk => {
             for name in select_def.table_or_subquery.iter() {
                 let table = db.map.get(name.as_slice()).unwrap();
 
                 for entry in table.entries.iter() {
-                    callback(entry, &table.columns);
+                    callback(entry, &table.header);
                 }
             }
         }

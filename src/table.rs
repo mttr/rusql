@@ -1,22 +1,23 @@
 use parser::definitions::{LiteralValue, ColumnDef};
 
 pub type TableEntry = Vec<LiteralValue>;
+pub type TableHeader = Vec<ColumnDef>;
 
 pub struct Table<'a> {
-    pub columns: Vec<ColumnDef>,
+    pub header: TableHeader,
     pub entries: Vec<TableEntry>,
 }
 
 impl<'a> Table<'a> {
     pub fn get_column_def_by_name(&'a self, name: String) -> Option<&'a ColumnDef> {
-        for column_def in self.columns.iter().filter(|&cols| cols.name == name) {
+        for column_def in self.header.iter().filter(|&cols| cols.name == name) {
             return Some(column_def);
         }
         None
     }
 
     pub fn get_column_index(&'a self, name: String) -> Option<uint> {
-        for (i, _) in self.columns.iter().filter(|&cols| cols.name == name).enumerate() {
+        for (i, _) in self.header.iter().filter(|&cols| cols.name == name).enumerate() {
             return Some(i);
         }
         None

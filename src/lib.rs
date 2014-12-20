@@ -3,7 +3,7 @@
 pub use exec::rusql_exec;
 pub use parser::definitions::ColumnDef;
 pub use rusql::Rusql;
-pub use table::TableEntry;
+pub use table::{TableEntry, TableHeader};
 
 pub mod parser {
     pub mod definitions;

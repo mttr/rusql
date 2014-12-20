@@ -1,6 +1,6 @@
 extern crate rusql;
 
-use rusql::{rusql_exec, Rusql, TableEntry, ColumnDef};
+use rusql::{rusql_exec, Rusql, TableEntry, TableHeader};
 
 fn main() {
     let mut db = Rusql::new();
@@ -12,9 +12,9 @@ fn main() {
                    INSERT INTO Foo VALUES(4, \"Bar4\"); \
                    SELECT * FROM Foo;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry: &TableEntry, def: &Vec<ColumnDef>| {
-        for (column, column_def) in entry.iter().zip(def.iter()) {
-            println!("{}: {}", column_def.name, column);
+    rusql_exec(&mut db, sql_str.to_string(), |entry: &TableEntry, header: &TableHeader| {
+        for (column, def) in entry.iter().zip(header.iter()) {
+            println!("{}: {}", def.name, column);
         }
     });
 }
