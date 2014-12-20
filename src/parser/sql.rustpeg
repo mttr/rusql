@@ -15,6 +15,14 @@ rparen = ")"
 
 comma = ","
 
+string_literal -> String
+        = "\"" s:string "\"" { s }
+
+string -> String
+    = (escape_char / [^"])* { match_str.to_string() } //"// (syntax highlight fix)
+
+escape_char = "\\" .
+
 CREATE = whitespace "CREATE"
 
 TABLE = whitespace1 "TABLE"
@@ -29,11 +37,17 @@ INTEGER = whitespace1 "INTEGER"
 
 TEXT = whitespace1 "TEXT"
 
+INSERT = whitespace "INSERT"
+
+INTO = whitespace1 "INTO"
+
+VALUES = whitespace1 "VALUES"
+
 nws_name -> String
         = [A-Za-z0-9_]+ { match_str.to_string() }
 
 name -> String
-        = whitespace1 n:nws_name whitespace { n }
+        = whitespace1 n:nws_name { n }
 
 table_name -> String
         = name
@@ -68,8 +82,20 @@ create_table_stmt -> RusqlStatement
             RusqlStatement::CreateTable(def)
           }
 
+literal_value -> LiteralValue
+        = whitespace ([0-9]+ { LiteralValue::Integer(from_str::<int>(match_str).unwrap()) })
+        / whitespace (s:string_literal { LiteralValue::Text(s) })
+
+insert_stmt -> RusqlStatement
+        = INSERT INTO n:table_name VALUES lparen l:(literal_value ++ comma) rparen {
+            let def = InsertDef {
+                table_name: n,
+                column_data: l,
+            };
+            RusqlStatement::Insert(def)
+        }
+
 #[export]
 rusql_stmt -> RusqlStatement
-        = whitespace s:(create_table_stmt) whitespace semicolon {
-            s
-        }
+        = whitespace s:(create_table_stmt) whitespace semicolon { s }
+        / whitespace s:(insert_stmt) whitespace semicolon { s }
