@@ -3,52 +3,106 @@
 
 use super::ast::*;
 
+#[export]
+rusql_stmt -> RusqlStatement
+        = whitespace s:(create_table_stmt) whitespace semicolon { s }
+        / whitespace s:(insert_stmt) whitespace semicolon { s }
+        / whitespace s:(select_stmt) whitespace semicolon { s }
+
+#[export]
+rusql_parse -> Vec<RusqlStatement>
+        = rusql_stmt ++ whitespace
+
+//
+// Statements
+//
+
+// CREATE TABLE
+// https://www.sqlite.org/lang_createtable.html
+
+create_table_stmt -> RusqlStatement
+        = CREATE TABLE n:table_name whitespace lparen c:(column_def ++ comma) rparen {
+            let def = TableDef {
+                table_name: n,
+                columns: c,
+            };
+            RusqlStatement::CreateTable(def)
+          }
+
+column_def -> ColumnDef
+        = n:column_name t:(type_name)? c:(column_constraint)* {
+            ColumnDef {
+                name: n,
+                column_type: t,
+                column_constraints: c,
+            }
+        }
+
+column_constraint -> ColumnConstraint
+        = (CONSTRAINT name)? (PRIMARY KEY) {
+            ColumnConstraint::PrimaryKey
+        }
+
+// INSERT
+// https://www.sqlite.org/lang_insert.html
+
+insert_stmt -> RusqlStatement
+        = INSERT INTO n:table_name VALUES lparen l:(literal_value ++ comma) rparen {
+            let def = InsertDef {
+                table_name: n,
+                column_data: l,
+            };
+            RusqlStatement::Insert(def)
+        }
+
+// SELECT
+// https://www.sqlite.org/lang_select.html
+select_stmt -> RusqlStatement
+        = SELECT r:result_column FROM t:(table_or_subquery ++ comma) {
+            let def = SelectDef {
+                result_column: r,
+                table_or_subquery: t,
+            };
+            RusqlStatement::Select(def)
+        }
+
+result_column -> ResultColumn
+        = whitespace1 a:asterisk { ResultColumn::Asterisk }
+
+table_or_subquery -> String
+        = table_name
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 whitespace = [ \t\n\r]*
-
 whitespace1 = [ \t\n\r]+
-
 semicolon = ";"
-
 lparen = "("
-
 rparen = ")"
-
 comma = ","
-
 asterisk = "*"
 
 string_literal -> String
         = "\"" s:string "\"" { s }
-
 string -> String
-    = (escape_char / [^"])* { match_str.to_string() } //"// (syntax highlight fix)
-
+        = (escape_char / [^"])* { match_str.to_string() } //"// (syntax highlight fix)
 escape_char = "\\" .
 
 CREATE = whitespace "CREATE"
-
-TABLE = whitespace1 "TABLE"
-
-PRIMARY = whitespace1 "PRIMARY"
-
-KEY = whitespace1 "KEY"
-
-CONSTRAINT = whitespace1 "CONSTRAINT"
-
-INTEGER = whitespace1 "INTEGER"
-
-TEXT = whitespace1 "TEXT"
-
 INSERT = whitespace "INSERT"
-
-INTO = whitespace1 "INTO"
-
-VALUES = whitespace1 "VALUES"
-
 SELECT = whitespace "SELECT"
 
+CONSTRAINT = whitespace1 "CONSTRAINT"
 FROM = whitespace1 "FROM"
+TABLE = whitespace1 "TABLE"
+INTEGER = whitespace1 "INTEGER"
+INTO = whitespace1 "INTO"
+KEY = whitespace1 "KEY"
+PRIMARY = whitespace1 "PRIMARY"
+TEXT = whitespace1 "TEXT"
+VALUES = whitespace1 "VALUES"
 
+// no whitespace name
 nws_name -> String
         = [A-Za-z0-9_]+ { match_str.to_string() }
 
@@ -65,63 +119,6 @@ type_name -> ColumnType
         = INTEGER { ColumnType::Integer }
         / TEXT { ColumnType::Text }
 
-column_def -> ColumnDef
-        = n:column_name t:(type_name)? c:(column_constraint)* {
-            ColumnDef {
-                name: n,
-                column_type: t,
-                column_constraints: c,
-            }
-        }
-
-column_constraint -> ColumnConstraint
-        = (CONSTRAINT name)? (PRIMARY KEY) {
-            ColumnConstraint::PrimaryKey
-        }
-
-create_table_stmt -> RusqlStatement
-        = CREATE TABLE n:table_name whitespace lparen c:(column_def ++ comma) rparen {
-            let def = TableDef {
-                table_name: n,
-                columns: c,
-            };
-            RusqlStatement::CreateTable(def)
-          }
-
 literal_value -> LiteralValue
         = whitespace ([0-9]+ { LiteralValue::Integer(from_str::<int>(match_str).unwrap()) })
         / whitespace (s:string_literal { LiteralValue::Text(s) })
-
-insert_stmt -> RusqlStatement
-        = INSERT INTO n:table_name VALUES lparen l:(literal_value ++ comma) rparen {
-            let def = InsertDef {
-                table_name: n,
-                column_data: l,
-            };
-            RusqlStatement::Insert(def)
-        }
-
-select_stmt -> RusqlStatement
-        = SELECT r:result_column FROM t:(table_or_subquery ++ comma) {
-            let def = SelectDef {
-                result_column: r,
-                table_or_subquery: t,
-            };
-            RusqlStatement::Select(def)
-        }
-
-result_column -> ResultColumn
-        = whitespace1 a:asterisk { ResultColumn::Asterisk }
-
-table_or_subquery -> String
-        = table_name
-
-#[export]
-rusql_stmt -> RusqlStatement
-        = whitespace s:(create_table_stmt) whitespace semicolon { s }
-        / whitespace s:(insert_stmt) whitespace semicolon { s }
-        / whitespace s:(select_stmt) whitespace semicolon { s }
-
-#[export]
-rusql_parse -> Vec<RusqlStatement>
-        = rusql_stmt ++ whitespace
