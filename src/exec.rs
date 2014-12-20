@@ -1,7 +1,7 @@
 use table::{TableEntry, Table};
 use parser::ast::{ColumnDef, ResultColumn, RusqlStatement};
 use parser::parser::rusql_stmt;
-use super::Rusql;
+use rusql::Rusql;
 
 pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &Vec<ColumnDef>|) {
     let stmt = rusql_stmt(sql_str.as_slice()).unwrap();

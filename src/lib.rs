@@ -1,7 +1,5 @@
 #![feature(globs)]
 
-use std::collections::TreeMap;
-
 pub mod parser {
     pub mod ast;
     pub mod parser;
@@ -9,34 +7,21 @@ pub mod parser {
 
 pub mod table;
 pub mod exec;
-
-pub struct Rusql<'a> {
-    pub map: TreeMap<String, table::Table<'a>>,
-}
-
-
-impl<'a> Rusql<'a> {
-    pub fn new() -> Rusql<'a> {
-        return Rusql {
-            map: TreeMap::new(),
-        };
-    }
-}
-
+pub mod rusql;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn init_db_with_table<'a>() -> Rusql<'a> {
-        let mut db = Rusql::new();
+    fn init_db_with_table<'a>() -> rusql::Rusql<'a> {
+        let mut db = rusql::Rusql::new();
         let sql_str = "CREATE TABLE Foo(Id INTEGER PRIMARY KEY, Name TEXT);".to_string();
         exec::rusql_exec(&mut db, sql_str, |_,_| {});
 
         db
     }
 
-    fn init_db_and_insert_into_table<'a>() -> Rusql<'a> {
+    fn init_db_and_insert_into_table<'a>() -> rusql::Rusql<'a> {
         let mut db = init_db_with_table();
         let sql_strs = vec![
             "INSERT INTO Foo VALUES(1, \"Bar1\");",
