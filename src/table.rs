@@ -1,4 +1,4 @@
-use parser::ast::{LiteralValue, ColumnDef};
+use parser::definitions::{LiteralValue, ColumnDef};
 
 pub type TableEntry = Vec<LiteralValue>;
 

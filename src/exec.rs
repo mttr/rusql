@@ -1,5 +1,5 @@
 use table::{TableEntry, Table};
-use parser::ast::{ColumnDef, ResultColumn, RusqlStatement, TableDef, InsertDef, SelectDef};
+use parser::definitions::{ColumnDef, ResultColumn, RusqlStatement, TableDef, InsertDef, SelectDef};
 use parser::parser::rusql_parse;
 use rusql::Rusql;
 

@@ -1,7 +1,7 @@
 // Adapted from: https://github.com/steveyen/sqld3/blob/master/sql.pegjs
 // And: https://www.sqlite.org/lang.html
 
-use super::ast::*;
+use super::definitions::*;
 
 #[export]
 rusql_stmt -> RusqlStatement
