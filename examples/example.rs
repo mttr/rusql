@@ -1,6 +1,7 @@
 extern crate rusql;
 
-use rusql::{rusql_exec, Rusql};
+use rusql::exec::rusql_exec;
+use rusql::Rusql;
 use rusql::table::TableEntry;
 use rusql::parser::ast::ColumnDef;
 
