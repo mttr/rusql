@@ -121,3 +121,7 @@ rusql_stmt -> RusqlStatement
         = whitespace s:(create_table_stmt) whitespace semicolon { s }
         / whitespace s:(insert_stmt) whitespace semicolon { s }
         / whitespace s:(select_stmt) whitespace semicolon { s }
+
+#[export]
+rusql_parse -> Vec<RusqlStatement>
+        = rusql_stmt ++ whitespace

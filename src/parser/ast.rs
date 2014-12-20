@@ -4,18 +4,18 @@ pub enum RusqlStatement {
     Select(SelectDef),
 }
 
-#[deriving(Copy)]
+#[deriving(Copy, Clone)]
 pub enum ColumnType {
     Integer,
     Text,
 }
 
-#[deriving(Copy)]
+#[deriving(Copy, Clone)]
 pub enum ColumnConstraint {
     PrimaryKey,
 }
 
-#[deriving(Show)]
+#[deriving(Show, Clone)]
 pub enum LiteralValue {
     Integer(int),
     Text(String),
@@ -38,6 +38,7 @@ pub struct InsertDef {
     pub column_data: Vec<LiteralValue>,
 }
 
+#[deriving(Clone)]
 pub struct ColumnDef {
     pub name: String,
     pub column_type: Option<ColumnType>,
