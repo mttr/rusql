@@ -15,6 +15,8 @@ rparen = ")"
 
 comma = ","
 
+asterisk = "*"
+
 string_literal -> String
         = "\"" s:string "\"" { s }
 
@@ -42,6 +44,10 @@ INSERT = whitespace "INSERT"
 INTO = whitespace1 "INTO"
 
 VALUES = whitespace1 "VALUES"
+
+SELECT = whitespace "SELECT"
+
+FROM = whitespace1 "FROM"
 
 nws_name -> String
         = [A-Za-z0-9_]+ { match_str.to_string() }
@@ -95,7 +101,23 @@ insert_stmt -> RusqlStatement
             RusqlStatement::Insert(def)
         }
 
+select_stmt -> RusqlStatement
+        = SELECT r:result_column FROM t:(table_or_subquery ++ comma) {
+            let def = SelectDef {
+                result_column: r,
+                table_or_subquery: t,
+            };
+            RusqlStatement::Select(def)
+        }
+
+result_column -> ResultColumn
+        = whitespace1 a:asterisk { ResultColumn::Asterisk }
+
+table_or_subquery -> String
+        = table_name
+
 #[export]
 rusql_stmt -> RusqlStatement
         = whitespace s:(create_table_stmt) whitespace semicolon { s }
         / whitespace s:(insert_stmt) whitespace semicolon { s }
+        / whitespace s:(select_stmt) whitespace semicolon { s }

@@ -55,7 +55,7 @@ impl<'a> Rusql<'a> {
     }
 }
 
-pub fn rusql_exec(db: &mut Rusql, sql_str: String) {
+pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &Vec<parser::ast::ColumnDef>|) {
     use parser::ast::*;
     let stmt = parser::parser::rusql_stmt(sql_str.as_slice()).unwrap();
     match stmt {
@@ -74,6 +74,19 @@ pub fn rusql_exec(db: &mut Rusql, sql_str: String) {
                 None => {},
             }
         }
+        RusqlStatement::Select(select_def) => {
+            match select_def.result_column {
+                parser::ast::ResultColumn::Asterisk => {
+                    for name in select_def.table_or_subquery.iter() {
+                        let table = db.map.get(name.as_slice()).unwrap();
+
+                        for entry in table.entries.iter() {
+                            callback(entry, &table.columns);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -84,7 +97,7 @@ mod tests {
     fn init_db_with_table<'a>() -> Rusql<'a> {
         let mut db = Rusql::new();
         let sql_str = "CREATE TABLE Foo(Id INTEGER PRIMARY KEY, Name TEXT);".to_string();
-        rusql_exec(&mut db, sql_str);
+        rusql_exec(&mut db, sql_str, |_,_| {});
 
         db
     }
@@ -99,7 +112,7 @@ mod tests {
         ];
 
         for sql_str in sql_strs.iter() {
-            rusql_exec(&mut db, sql_str.to_string());
+            rusql_exec(&mut db, sql_str.to_string(), |_,_| {});
         }
 
         db

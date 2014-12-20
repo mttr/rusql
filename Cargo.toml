@@ -3,3 +3,7 @@
 name = "rusql"
 version = "0.0.1"
 authors = ["Matthew Rasmus <mattr@zzntd.com>"]
+
+[[example]]
+name = "example"
+path = "examples/example.rs"
