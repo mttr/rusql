@@ -21,9 +21,10 @@ fn main() {
     let sql_str = "CREATE TABLE Foo(Id INTEGER PRIMARY KEY, Name TEXT); \
                    INSERT INTO Foo VALUES(1, \"Bar1\"); \
                    INSERT INTO Foo VALUES(2, \"Bar2\"); \
-                   INSERT INTO Foo VALUES(3, \"Bar3\"); \
-                   INSERT INTO Foo VALUES(4, \"Bar4\"); \
-                   SELECT * FROM Foo;";
+                   CREATE TABLE Yarp(Id INTEGER PRIMARY KEY, Name TEXT); \
+                   INSERT INTO Yarp VALUES(1, \"Yarp1\"); \
+                   INSERT INTO Yarp VALUES(2, \"Yarp2\"); \
+                   SELECT * FROM Foo, Yarp;";
 
     rusql_exec(&mut db, sql_str.to_string(), |entry: &TableEntry, header: &TableHeader| {
         for (column, def) in entry.iter().zip(header.iter()) {
@@ -39,8 +40,8 @@ Id: Integer(1)
 Name: Text(Bar1)
 Id: Integer(2)
 Name: Text(Bar2)
-Id: Integer(3)
-Name: Text(Bar3)
-Id: Integer(4)
-Name: Text(Bar4)
+Id: Integer(1)
+Name: Text(Yarp1)
+Id: Integer(2)
+Name: Text(Yarp2)
 ```
