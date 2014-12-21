@@ -5,7 +5,8 @@ use super::definitions::*;
 
 #[export]
 rusql_stmt -> RusqlStatement
-        = whitespace s:(create_table_stmt) whitespace semicolon { s }
+        = whitespace s:(alter_table_stmt) whitespace semicolon { s }
+        / whitespace s:(create_table_stmt) whitespace semicolon { s }
         / whitespace s:(drop_table_stmt) whitespace semicolon { s }
         / whitespace s:(insert_stmt) whitespace semicolon { s }
         / whitespace s:(select_stmt) whitespace semicolon { s }
@@ -17,6 +18,18 @@ rusql_parse -> Vec<RusqlStatement>
 //
 // Statements
 //
+
+// ALTER TABLE
+// https://www.sqlite.org/lang_altertable.html
+
+alter_table_stmt -> RusqlStatement
+        = ALTER TABLE n1:table_name RENAME TO n2:table_name {
+            let def = AlterTableDef {
+                name: n1,
+                mode: AlterTable::RenameTo(n2),
+            };
+            RusqlStatement::AlterTable(def)
+        }
 
 // CREATE TABLE
 // https://www.sqlite.org/lang_createtable.html
@@ -100,6 +113,7 @@ string -> String
         = (escape_char / [^"])* { match_str.to_string() } //"// (syntax highlight fix)
 escape_char = "\\" .
 
+ALTER = whitespace "ALTER"
 CREATE = whitespace "CREATE"
 DROP = whitespace "DROP"
 INSERT = whitespace "INSERT"
@@ -112,7 +126,9 @@ INTEGER = whitespace1 "INTEGER"
 INTO = whitespace1 "INTO"
 KEY = whitespace1 "KEY"
 PRIMARY = whitespace1 "PRIMARY"
+RENAME = whitespace1 "RENAME"
 TEXT = whitespace1 "TEXT"
+TO = whitespace1 "TO"
 VALUES = whitespace1 "VALUES"
 
 // no whitespace name

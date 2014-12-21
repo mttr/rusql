@@ -58,3 +58,12 @@ fn test_drop_table() {
     rusql_exec(&mut db, "DROP TABLE Foo;".to_string(), |_,_| {});
     assert!(!db.map.contains_key("Foo".as_slice()));
 }
+
+#[test]
+fn test_alter_table_rename() {
+    let mut db = init_db_with_table();
+    assert!(db.map.contains_key("Foo".as_slice()));
+    rusql_exec(&mut db, "ALTER TABLE Foo RENAME TO Bar;".to_string(), |_,_| {});
+    assert!(!db.map.contains_key("Foo".as_slice()));
+    assert!(db.map.contains_key("Bar".as_slice()));
+}

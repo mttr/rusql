@@ -1,4 +1,5 @@
 pub enum RusqlStatement {
+    AlterTable(AlterTableDef),
     CreateTable(TableDef),
     DropTable(DropTableDef),
     Insert(InsertDef),
@@ -53,4 +54,13 @@ pub struct SelectDef {
 
 pub struct DropTableDef {
     pub name: String,
+}
+
+pub enum AlterTable {
+    RenameTo(String),
+}
+
+pub struct AlterTableDef {
+    pub name: String,
+    pub mode: AlterTable,
 }
