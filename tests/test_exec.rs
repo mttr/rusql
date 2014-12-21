@@ -50,3 +50,11 @@ fn test_has_entries() {
     assert!(table.has_entry(3));
     assert!(table.has_entry(4));
 }
+
+#[test]
+fn test_drop_table() {
+    let mut db = init_db_with_table();
+    assert!(db.map.contains_key("Foo".as_slice()));
+    rusql_exec(&mut db, "DROP TABLE Foo;".to_string(), |_,_| {});
+    assert!(!db.map.contains_key("Foo".as_slice()));
+}

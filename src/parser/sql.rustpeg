@@ -6,6 +6,7 @@ use super::definitions::*;
 #[export]
 rusql_stmt -> RusqlStatement
         = whitespace s:(create_table_stmt) whitespace semicolon { s }
+        / whitespace s:(drop_table_stmt) whitespace semicolon { s }
         / whitespace s:(insert_stmt) whitespace semicolon { s }
         / whitespace s:(select_stmt) whitespace semicolon { s }
 
@@ -41,6 +42,17 @@ column_def -> ColumnDef
 column_constraint -> ColumnConstraint
         = (CONSTRAINT name)? (PRIMARY KEY) {
             ColumnConstraint::PrimaryKey
+        }
+
+// DROP TABLE
+// https://www.sqlite.org/lang_droptable.html
+
+drop_table_stmt -> RusqlStatement
+        = DROP TABLE n:table_name {
+            let def = DropTableDef {
+                name: n,
+            };
+            RusqlStatement::DropTable(def)
         }
 
 // INSERT
@@ -89,6 +101,7 @@ string -> String
 escape_char = "\\" .
 
 CREATE = whitespace "CREATE"
+DROP = whitespace "DROP"
 INSERT = whitespace "INSERT"
 SELECT = whitespace "SELECT"
 

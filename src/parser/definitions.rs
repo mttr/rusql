@@ -1,5 +1,6 @@
 pub enum RusqlStatement {
     CreateTable(TableDef),
+    DropTable(DropTableDef),
     Insert(InsertDef),
     Select(SelectDef),
 }
@@ -48,4 +49,8 @@ pub struct ColumnDef {
 pub struct SelectDef {
     pub result_column: ResultColumn,
     pub table_or_subquery: Vec<String>,
+}
+
+pub struct DropTableDef {
+    pub name: String,
 }

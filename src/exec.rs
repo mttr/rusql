@@ -1,5 +1,5 @@
 use table::{TableEntry, TableHeader, Table};
-use parser::definitions::{ResultColumn, RusqlStatement, TableDef, InsertDef, SelectDef};
+use parser::definitions::{ResultColumn, RusqlStatement, TableDef, InsertDef, SelectDef, DropTableDef};
 use parser::parser::rusql_parse;
 use rusql::Rusql;
 
@@ -7,6 +7,7 @@ pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &Tabl
     for stmt in rusql_parse(sql_str.as_slice()).unwrap().iter() {
         match stmt {
             &RusqlStatement::CreateTable(ref table_def) => create_table(db, table_def),
+            &RusqlStatement::DropTable(ref drop_table_def) => drop_table(db, drop_table_def),
             &RusqlStatement::Insert(ref insert_def) => insert(db, insert_def),
             &RusqlStatement::Select(ref select_def) => select(db, select_def, |a, b| callback(a, b)),
         }
@@ -18,6 +19,10 @@ fn create_table(db: &mut Rusql, table_def: &TableDef) {
         header: table_def.columns.clone(),
         entries: Vec::new(),
     });
+}
+
+fn drop_table(db: &mut Rusql, drop_table_def: &DropTableDef) {
+    db.map.remove(drop_table_def.name.as_slice());
 }
 
 fn insert(db: &mut Rusql, insert_def: &InsertDef) {
