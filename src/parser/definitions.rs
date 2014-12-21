@@ -17,7 +17,7 @@ pub enum ColumnConstraint {
     PrimaryKey,
 }
 
-#[deriving(Show, Clone)]
+#[deriving(Show, Clone, PartialEq)]
 pub enum LiteralValue {
     Integer(int),
     Text(String),
