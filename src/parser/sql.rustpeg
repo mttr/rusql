@@ -1,3 +1,4 @@
+// vim:set et sw=4 ts=4 ft=rust:
 // Adapted from: https://github.com/steveyen/sqld3/blob/master/sql.pegjs
 // And: https://www.sqlite.org/lang.html
 
