@@ -1,10 +1,13 @@
 # rusql
 
-A naive RDBMS written in Rust.
+A naive, SQL based RDBMS written in Rust.
 
-My current intentions for this project is to expand upon my pathetically
-lacking knowledge of SQL and databases in general, while having a bit of fun
-with Rust.
+My current intentions for this project are to expand upon my pathetically
+lacking knowledge of SQL, while having a bit of fun with Rust.
+
+Based (very loosely) on SQLite, using SQLite's [understanding of SQL](https://www.sqlite.org/lang.html) as a sort of spec.
+
+Uses [rust-peg](https://github.com/kevinmehall/rust-peg) to generate the parser.
 
 ## Example
 
