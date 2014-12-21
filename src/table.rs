@@ -23,3 +23,7 @@ impl<'a> Table<'a> {
         self.entries.iter().any(|entry| entry[index] == LiteralValue::Integer(pk))
     }
 }
+
+pub fn get_column(name: &String, entry: &TableEntry, head: &TableHeader) -> LiteralValue {
+    entry[head.iter().position(|ref def| def.name == *name).unwrap()].clone()
+}
