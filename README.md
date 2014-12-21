@@ -13,7 +13,7 @@ Ripped straight out of `examples/example.rs`:
 ``` rust
 extern crate rusql;
 
-use rusql::{rusql_exec, Rusql, TableEntry, TableHeader};
+use rusql::{rusql_exec, Rusql};
 
 fn main() {
     let mut db = Rusql::new();
@@ -26,7 +26,7 @@ fn main() {
                    INSERT INTO Yarp VALUES(2, \"Yarp2\"); \
                    SELECT * FROM Foo, Yarp;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry: &TableEntry, header: &TableHeader| {
+    rusql_exec(&mut db, sql_str.to_string(), |entry, header| {
         for (column, def) in entry.iter().zip(header.iter()) {
             println!("{}: {}", def.name, column);
         }

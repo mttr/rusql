@@ -73,7 +73,7 @@ fn test_select_with() {
     let mut db = init_db_and_insert_into_table();
     let mut called_once = false;
 
-    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=2;".to_string(), |entry, _head| {
+    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=2;".to_string(), |entry, _| {
         assert!(entry[0] == LiteralValue::Integer(2));
         called_once = true;
     });
