@@ -1,16 +1,16 @@
 use table::Table;
 
-use std::collections::TreeMap;
+use std::collections::BTreeMap;
 
 pub struct Rusql<'a> {
-    pub map: TreeMap<String, Table<'a>>,
+    pub map: BTreeMap<String, Table<'a>>,
 }
 
 
 impl<'a> Rusql<'a> {
     pub fn new() -> Rusql<'a> {
         return Rusql {
-            map: TreeMap::new(),
+            map: BTreeMap::new(),
         };
     }
 }
