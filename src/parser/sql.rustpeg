@@ -83,11 +83,13 @@ insert_stmt -> RusqlStatement
 
 // SELECT
 // https://www.sqlite.org/lang_select.html
+
 select_stmt -> RusqlStatement
-        = SELECT r:result_column FROM t:(table_or_subquery ++ comma) {
+        = SELECT r:result_column FROM t:(table_or_subquery ++ comma) w:where_expr? {
             let def = SelectDef {
                 result_column: r,
                 table_or_subquery: t,
+                where_expr: w,
             };
             RusqlStatement::Select(def)
         }
@@ -98,6 +100,24 @@ result_column -> ResultColumn
 table_or_subquery -> String
         = table_name
 
+where_expr -> Expression
+        = WHERE whitespace1 e:expr { e }
+
+//
+// Expressions
+// https://www.sqlite.org/lang_expr.html
+//
+
+value -> Expression
+    = l:literal_value { Expression::LiteralValue(l) }
+    / n:column_name { Expression::ColumnName(n) }
+
+expr -> Expression
+        = whitespace (
+            e1:value b:binary_operator e2:expr { Expression::BinaryOperator((b, box e1, box e2)) }
+            / v:value { v }
+        )
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 whitespace = [ \t\n\r]*
@@ -107,6 +127,8 @@ lparen = "("
 rparen = ")"
 comma = ","
 asterisk = "*"
+equals = "="
+equals2 = "=="
 
 string_literal -> String
         = "\"" s:string "\"" { s }
@@ -131,6 +153,7 @@ RENAME = whitespace1 "RENAME"
 TEXT = whitespace1 "TEXT"
 TO = whitespace1 "TO"
 VALUES = whitespace1 "VALUES"
+WHERE = whitespace1 "WHERE"
 
 // no whitespace name
 nws_name -> String
@@ -152,3 +175,6 @@ type_name -> ColumnType
 literal_value -> LiteralValue
         = whitespace ([0-9]+ { LiteralValue::Integer(from_str::<int>(match_str).unwrap()) })
         / whitespace (s:string_literal { LiteralValue::Text(s) })
+
+binary_operator -> BinaryOperator
+        = (equals / equals2) { BinaryOperator::Equals }

@@ -1,6 +1,6 @@
 extern crate rusql;
 
-use rusql::{rusql_exec, Rusql};
+use rusql::{rusql_exec, Rusql, LiteralValue};
 
 fn init_db_with_table<'a>() -> Rusql<'a> {
     let mut db = rusql::Rusql::new();
@@ -66,4 +66,17 @@ fn test_alter_table_rename() {
     rusql_exec(&mut db, "ALTER TABLE Foo RENAME TO Bar;".to_string(), |_,_| {});
     assert!(!db.map.contains_key("Foo".as_slice()));
     assert!(db.map.contains_key("Bar".as_slice()));
+}
+
+#[test]
+fn test_select_with() {
+    let mut db = init_db_and_insert_into_table();
+    let mut called_once = false;
+
+    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=2;".to_string(), |entry, _head| {
+        assert!(entry[0] == LiteralValue::Integer(2));
+        called_once = true;
+    });
+
+    assert!(called_once);
 }

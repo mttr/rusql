@@ -1,7 +1,7 @@
 #![feature(globs)]
 
 pub use exec::rusql_exec;
-pub use parser::definitions::ColumnDef;
+pub use parser::definitions::{ColumnDef, LiteralValue};
 pub use rusql::Rusql;
 pub use table::{TableEntry, TableHeader};
 

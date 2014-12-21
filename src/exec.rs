@@ -1,6 +1,7 @@
 use table::{TableEntry, TableHeader, Table};
 use parser::definitions::{ResultColumn, RusqlStatement, TableDef, InsertDef, SelectDef};
-use parser::definitions::{DropTableDef, AlterTableDef, AlterTable};
+use parser::definitions::{DropTableDef, AlterTableDef, AlterTable, Expression, BinaryOperator};
+use parser::definitions::{LiteralValue};
 use parser::parser::rusql_parse;
 use rusql::Rusql;
 
@@ -46,14 +47,51 @@ fn insert(db: &mut Rusql, insert_def: &InsertDef) {
     }
 }
 
+#[deriving(PartialEq)]
+enum ExpressionResult {
+    Value(LiteralValue),
+    Null,
+}
+
+fn eval_boolean_expression(expr: &Expression, entry: &TableEntry, head: &TableHeader) -> bool {
+    // WHERE Id=1
+    // Expression::BinaryOperator((Equals, Expression::ColumnName(), Expression::LiteralValue))
+    match expr {
+        &Expression::BinaryOperator((b, ref exp1, ref exp2)) => {
+            match b {
+                BinaryOperator::Equals => {
+                    eval_expr(&**exp1, entry, head) == eval_expr(&**exp2, entry, head)
+                }
+            }
+        }
+        _ => false
+    }
+}
+
+fn eval_expr(expr: &Expression, entry: &TableEntry, head: &TableHeader) -> ExpressionResult {
+    match expr {
+        &Expression::LiteralValue(ref value) => ExpressionResult::Value(value.clone()),
+        // FIXME FIXME FIXME FIXME
+        &Expression::ColumnName(ref name) => ExpressionResult::Value(entry[head.iter().position(|ref def| def.name == *name).unwrap()].clone()),
+        _ => ExpressionResult::Null,
+    }
+}
+
 fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableEntry, &TableHeader|) {
     match select_def.result_column {
         ResultColumn::Asterisk => {
             for name in select_def.table_or_subquery.iter() {
                 let table = db.map.get(name.as_slice()).unwrap();
 
-                for entry in table.entries.iter() {
-                    callback(entry, &table.header);
+                if let Some(ref expr) = select_def.where_expr {
+                    for table_entry in table.entries.iter().filter(|&entry| eval_boolean_expression(expr, entry, &table.header)) {
+                        callback(table_entry, &table.header);
+                    }
+                }
+                else {
+                    for entry in table.entries.iter() {
+                        callback(entry, &table.header);
+                    }
                 }
             }
         }

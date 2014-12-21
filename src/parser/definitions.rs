@@ -50,6 +50,7 @@ pub struct ColumnDef {
 pub struct SelectDef {
     pub result_column: ResultColumn,
     pub table_or_subquery: Vec<String>,
+    pub where_expr: Option<Expression>,
 }
 
 pub struct DropTableDef {
@@ -63,4 +64,15 @@ pub enum AlterTable {
 pub struct AlterTableDef {
     pub name: String,
     pub mode: AlterTable,
+}
+
+pub enum Expression {
+    LiteralValue(LiteralValue),
+    ColumnName(String),
+    BinaryOperator((BinaryOperator, Box<Expression>, Box<Expression>)),
+}
+
+#[deriving(Copy)]
+pub enum BinaryOperator {
+    Equals,
 }
