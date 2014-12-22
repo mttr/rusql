@@ -80,3 +80,16 @@ fn test_select_with() {
 
     assert!(called_once);
 }
+
+#[test]
+fn test_alter_table_add_to() {
+    let mut db = init_db_and_insert_into_table();
+
+    rusql_exec(&mut db, "ALTER TABLE Foo ADD COLUMN Hodor TEXT;".to_string(), |_,_| {});
+    rusql_exec(&mut db, "ALTER TABLE Foo ADD Qux TEXT;".to_string(), |_,_| {});
+
+    let table = db.map.get("Foo".as_slice()).unwrap();
+    assert!(table.get_column_def_by_name("Hodor".to_string()).is_some());
+    assert!(table.get_column_def_by_name("Qux".to_string()).is_some());
+    table.assert_size();
+}

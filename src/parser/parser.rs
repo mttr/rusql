@@ -429,61 +429,130 @@ fn parse_alter_table_stmt<'input>(input: &'input str, state: &mut ParseState,
                                     let seq_res =
                                         parse_table_name(input, state, pos);
                                     match seq_res {
-                                        Matched(pos, n1) => {
+                                        Matched(pos, n) => {
                                             {
                                                 let seq_res =
-                                                    parse_RENAME(input, state,
-                                                                 pos);
+                                                    {
+                                                        let choice_res =
+                                                            parse_rename_to(input,
+                                                                            state,
+                                                                            pos);
+                                                        match choice_res {
+                                                            Matched(pos,
+                                                                    value) =>
+                                                            Matched(pos,
+                                                                    value),
+                                                            Failed =>
+                                                            parse_add_column(input,
+                                                                             state,
+                                                                             pos),
+                                                        }
+                                                    };
                                                 match seq_res {
-                                                    Matched(pos, _) => {
+                                                    Matched(pos, a) => {
                                                         {
-                                                            let seq_res =
-                                                                parse_TO(input,
-                                                                         state,
-                                                                         pos);
-                                                            match seq_res {
-                                                                Matched(pos,
-                                                                        _) =>
-                                                                {
+                                                            let match_str =
+                                                                input.slice(start_pos,
+                                                                            pos);
+                                                            Matched(pos,
                                                                     {
-                                                                        let seq_res =
-                                                                            parse_table_name(input,
-                                                                                             state,
-                                                                                             pos);
-                                                                        match seq_res
-                                                                            {
-                                                                            Matched(pos,
-                                                                                    n2)
-                                                                            =>
-                                                                            {
-                                                                                {
-                                                                                    let match_str =
-                                                                                        input.slice(start_pos,
-                                                                                                    pos);
-                                                                                    Matched(pos,
-                                                                                            {
-                                                                                                let def =
-                                                                                                    AlterTableDef{name:
-                                                                                                                      n1,
-                                                                                                                  mode:
-                                                                                                                      AlterTable::RenameTo(n2),};
-                                                                                                RusqlStatement::AlterTable(def)
-                                                                                            })
-                                                                                }
-                                                                            }
-                                                                            Failed
-                                                                            =>
-                                                                            Failed,
-                                                                        }
-                                                                    }
-                                                                }
-                                                                Failed =>
-                                                                Failed,
-                                                            }
+                                                                        let def =
+                                                                            AlterTableDef{name:
+                                                                                              n,
+                                                                                          mode:
+                                                                                              a,};
+                                                                        RusqlStatement::AlterTable(def)
+                                                                    })
                                                         }
                                                     }
                                                     Failed => Failed,
                                                 }
+                                            }
+                                        }
+                                        Failed => Failed,
+                                    }
+                                }
+                            }
+                            Failed => Failed,
+                        }
+                    }
+                }
+                Failed => Failed,
+            }
+        }
+    }
+}
+fn parse_rename_to<'input>(input: &'input str, state: &mut ParseState,
+                           pos: uint) -> ParseResult<AlterTable> {
+    {
+        let start_pos = pos;
+        {
+            let seq_res = parse_RENAME(input, state, pos);
+            match seq_res {
+                Matched(pos, _) => {
+                    {
+                        let seq_res = parse_TO(input, state, pos);
+                        match seq_res {
+                            Matched(pos, _) => {
+                                {
+                                    let seq_res =
+                                        parse_table_name(input, state, pos);
+                                    match seq_res {
+                                        Matched(pos, n) => {
+                                            {
+                                                let match_str =
+                                                    input.slice(start_pos,
+                                                                pos);
+                                                Matched(pos,
+                                                        {
+                                                            AlterTable::RenameTo(n)
+                                                        })
+                                            }
+                                        }
+                                        Failed => Failed,
+                                    }
+                                }
+                            }
+                            Failed => Failed,
+                        }
+                    }
+                }
+                Failed => Failed,
+            }
+        }
+    }
+}
+fn parse_add_column<'input>(input: &'input str, state: &mut ParseState,
+                            pos: uint) -> ParseResult<AlterTable> {
+    {
+        let start_pos = pos;
+        {
+            let seq_res = parse_ADD(input, state, pos);
+            match seq_res {
+                Matched(pos, _) => {
+                    {
+                        let seq_res =
+                            match parse_COLUMN(input, state, pos) {
+                                Matched(newpos, value) => {
+                                    Matched(newpos, Some(value))
+                                }
+                                Failed => { Matched(pos, None) }
+                            };
+                        match seq_res {
+                            Matched(pos, _) => {
+                                {
+                                    let seq_res =
+                                        parse_column_def(input, state, pos);
+                                    match seq_res {
+                                        Matched(pos, c) => {
+                                            {
+                                                let match_str =
+                                                    input.slice(start_pos,
+                                                                pos);
+                                                Matched(pos,
+                                                        {
+                                                            AlterTable::AddColumn(c)
+                                                        })
                                             }
                                         }
                                         Failed => Failed,
@@ -1541,6 +1610,26 @@ fn parse_SELECT<'input>(input: &'input str, state: &mut ParseState, pos: uint)
         let seq_res = parse_whitespace(input, state, pos);
         match seq_res {
             Matched(pos, _) => { slice_eq(input, state, pos, "SELECT") }
+            Failed => Failed,
+        }
+    }
+}
+fn parse_ADD<'input>(input: &'input str, state: &mut ParseState, pos: uint)
+ -> ParseResult<()> {
+    {
+        let seq_res = parse_whitespace1(input, state, pos);
+        match seq_res {
+            Matched(pos, _) => { slice_eq(input, state, pos, "ADD") }
+            Failed => Failed,
+        }
+    }
+}
+fn parse_COLUMN<'input>(input: &'input str, state: &mut ParseState, pos: uint)
+ -> ParseResult<()> {
+    {
+        let seq_res = parse_whitespace1(input, state, pos);
+        match seq_res {
+            Matched(pos, _) => { slice_eq(input, state, pos, "COLUMN") }
             Failed => Failed,
         }
     }

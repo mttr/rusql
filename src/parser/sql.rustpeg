@@ -24,13 +24,19 @@ rusql_parse -> Vec<RusqlStatement>
 // https://www.sqlite.org/lang_altertable.html
 
 alter_table_stmt -> RusqlStatement
-        = ALTER TABLE n1:table_name RENAME TO n2:table_name {
+        = ALTER TABLE n:table_name a:(rename_to / add_column) {
             let def = AlterTableDef {
-                name: n1,
-                mode: AlterTable::RenameTo(n2),
+                name: n,
+                mode: a,
             };
             RusqlStatement::AlterTable(def)
         }
+
+rename_to -> AlterTable
+        = RENAME TO n:table_name { AlterTable::RenameTo(n) }
+
+add_column -> AlterTable
+        = ADD COLUMN? c:column_def { AlterTable::AddColumn(c) }
 
 // CREATE TABLE
 // https://www.sqlite.org/lang_createtable.html
@@ -142,6 +148,8 @@ DROP = whitespace "DROP"
 INSERT = whitespace "INSERT"
 SELECT = whitespace "SELECT"
 
+ADD = whitespace1 "ADD"
+COLUMN = whitespace1 "COLUMN"
 CONSTRAINT = whitespace1 "CONSTRAINT"
 FROM = whitespace1 "FROM"
 TABLE = whitespace1 "TABLE"

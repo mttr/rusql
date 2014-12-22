@@ -23,6 +23,14 @@ fn alter_table(db: &mut Rusql, alter_table_def: &AlterTableDef) {
             let table = db.map.remove(alter_table_def.name.as_slice()).unwrap();
             db.map.insert(new_name.clone(), table);
         }
+        AlterTable::AddColumn(ref column_def) => {
+            let table = db.map.get_mut(alter_table_def.name.as_slice()).unwrap();
+            table.header.push(column_def.clone());
+
+            for entry in table.entries.iter_mut() {
+                entry.push(LiteralValue::Null);
+            }
+        }
     }
 }
 

@@ -59,6 +59,7 @@ pub struct DropTableDef {
 
 pub enum AlterTable {
     RenameTo(String),
+    AddColumn(ColumnDef),
 }
 
 pub struct AlterTableDef {

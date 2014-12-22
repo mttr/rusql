@@ -22,6 +22,14 @@ impl<'a> Table<'a> {
 
         self.entries.iter().any(|entry| entry[index] == LiteralValue::Integer(pk))
     }
+
+    pub fn assert_size(&'a self) {
+        let header_size = self.header.len();
+
+        for entry in self.entries.iter() {
+            assert!(entry.len() == header_size);
+        }
+    }
 }
 
 pub fn get_column(name: &String, entry: &TableEntry, head: &TableHeader) -> LiteralValue {
