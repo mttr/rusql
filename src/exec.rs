@@ -48,8 +48,18 @@ fn drop_table(db: &mut Rusql, drop_table_def: &DropTableDef) {
 fn insert(db: &mut Rusql, insert_def: &InsertDef) {
     match db.map.get_mut(insert_def.table_name.as_slice()) {
         Some(table) => {
-            let ref mut entries = table.entries;
-            entries.push(insert_def.column_data.clone());
+            if let Some(ref column_names) = insert_def.column_names {
+                assert!(column_names.len() == insert_def.column_data.len());
+                let mut entry = Vec::from_elem(table.header.len(), LiteralValue::Null);
+
+                for (name, data) in column_names.iter().zip(insert_def.column_data.iter()) {
+                    entry[table.get_column_index(name.clone()).unwrap()] = data.clone();
+                }
+
+                table.entries.push(entry);
+            } else {
+                table.entries.push(insert_def.column_data.clone());
+            }
         }
         None => {},
     }

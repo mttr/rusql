@@ -93,3 +93,18 @@ fn test_alter_table_add_to() {
     assert!(table.get_column_def_by_name("Qux".to_string()).is_some());
     table.assert_size();
 }
+
+#[test]
+fn test_insert_into_with_specified_columns() {
+    let mut db = init_db_with_table();
+    let mut called_once = false;
+    let comparison = vec![LiteralValue::Integer(3), LiteralValue::Null];
+
+    rusql_exec(&mut db, "INSERT INTO Foo(Id) VALUES(3);".to_string(), |_,_| {});
+    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=3;".to_string(), |entry, _| {
+        assert!(entry == &comparison);
+        called_once = true;
+    });
+
+    assert!(called_once);
+}

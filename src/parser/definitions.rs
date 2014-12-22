@@ -37,6 +37,7 @@ pub enum ResultColumn {
 
 pub struct InsertDef {
     pub table_name: String,
+    pub column_names: Option<Vec<String>>,
     pub column_data: Vec<LiteralValue>,
 }
 
