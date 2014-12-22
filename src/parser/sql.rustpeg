@@ -79,17 +79,20 @@ drop_table_stmt -> RusqlStatement
 // https://www.sqlite.org/lang_insert.html
 
 insert_stmt -> RusqlStatement
-        = INSERT INTO n:table_name cn:insert_column_name? VALUES lparen l:(literal_value ++ comma) rparen {
+        = INSERT INTO n:table_name cn:insert_column_name? VALUES v:(insert_values ++ comma) {
             let def = InsertDef {
                 table_name: n,
                 column_names: cn,
-                column_data: l,
+                column_data: v,
             };
             RusqlStatement::Insert(def)
         }
 
 insert_column_name -> Vec<String>
-        = lparen s:(column_name ++ comma) rparen { s }
+        = whitespace lparen s:(column_name ++ comma) rparen { s }
+
+insert_values -> Vec<LiteralValue>
+        = whitespace lparen l:(literal_value ++ comma) rparen { l }
 
 // SELECT
 // https://www.sqlite.org/lang_select.html

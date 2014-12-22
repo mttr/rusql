@@ -108,3 +108,26 @@ fn test_insert_into_with_specified_columns() {
 
     assert!(called_once);
 }
+
+#[test]
+fn test_insert_into_with_multiple_rows() {
+    let mut db = Rusql::new();
+    let expected = vec![LiteralValue::Integer(2),
+                        LiteralValue::Integer(4),
+                        LiteralValue::Integer(8),
+                        LiteralValue::Integer(15),
+                        LiteralValue::Integer(16),
+                        LiteralValue::Integer(23),
+                        LiteralValue::Integer(42)];
+    let mut results: Vec<LiteralValue> = Vec::new();
+
+    let sql_str = "CREATE TABLE Ints(Id INTEGER PRIMARY KEY); \
+                   INSERT INTO Ints(Id) VALUES (2), (4), (8), (15), (16), (23), (42); \
+                   SELECT * FROM Ints;";
+
+    rusql_exec(&mut db,sql_str.to_string(), |entry, _| {
+        results.push(entry[0].clone());
+    });
+
+    assert!(results == expected);
+}
