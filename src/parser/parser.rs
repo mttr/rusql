@@ -2118,7 +2118,7 @@ fn parse_literal_value<'input>(input: &'input str, state: &mut ParseState,
                                                 input.slice(start_pos, pos);
                                             Matched(pos,
                                                     {
-                                                        LiteralValue::Integer(from_str::<int>(match_str).unwrap())
+                                                        LiteralValue::Integer(match_str.parse::<int>().unwrap())
                                                     })
                                         }
                                     }
