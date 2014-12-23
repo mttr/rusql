@@ -3,6 +3,12 @@
 name = "rusql"
 version = "0.0.1"
 authors = ["Matthew Rasmus <mattr@zzntd.com>"]
+description = "A wannabe DBMS, in Rust"
+readme = "./README.md"
+keywords = ["sql", "dbms"]
+license = "MIT"
+homepage = "https://github.com/mttr/rusql"
+repository = "https://github.com/mttr/rusql.git"
 
 [[example]]
 name = "example"
