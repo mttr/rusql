@@ -30,6 +30,32 @@ impl<'a> Table<'a> {
             assert!(entry.len() == header_size);
         }
     }
+
+    pub fn add_column(&'a mut self, column_def: &ColumnDef) {
+        self.header.push(column_def.clone());
+
+        for entry in self.entries.iter_mut() {
+            entry.push(LiteralValue::Null);
+        }
+    }
+
+    pub fn insert(&'a mut self, column_data: &Vec<Vec<LiteralValue>>, 
+                  specified_columns: &Option<Vec<String>>) {
+        for column_data in column_data.iter() {
+            if let &Some(ref column_names) = specified_columns {
+                assert!(column_names.len() == column_data.len());
+                let mut entry = Vec::from_elem(self.header.len(), LiteralValue::Null);
+
+                for (name, data) in column_names.iter().zip(column_data.iter()) {
+                    entry[self.get_column_index(name.clone()).unwrap()] = data.clone();
+                }
+
+                self.entries.push(entry);
+            } else {
+                self.entries.push(column_data.clone());
+            }
+        }
+    }
 }
 
 pub fn get_column(name: &String, entry: &TableEntry, head: &TableHeader) -> LiteralValue {
