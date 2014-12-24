@@ -56,6 +56,14 @@ impl<'a> Table<'a> {
             }
         }
     }
+
+    pub fn delete_where(&'a mut self, f: |entry: &TableEntry| -> bool) {
+        self.entries.retain(|entry| !f(entry));
+    }
+
+    pub fn clear(&'a mut self) {
+        self.entries.clear();
+    }
 }
 
 pub fn get_column(name: &String, entry: &TableEntry, head: &TableHeader) -> LiteralValue {

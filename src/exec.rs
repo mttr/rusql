@@ -32,7 +32,7 @@ fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
     if let Some(ref expr) = delete_def.where_expr {
         // FIXME just making the borrow checker happy...
         let header = table.header.clone();
-        table.entries.retain(|ref entry| !eval_boolean_expression(expr, *entry, &header));
+        table.delete_where(|entry| eval_boolean_expression(expr, entry, &header));
     } else {
         table.entries.clear();
     }
