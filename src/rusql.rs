@@ -1,4 +1,4 @@
-use parser::definitions::TableDef;
+use definitions::TableDef;
 use table::Table;
 
 use std::collections::BTreeMap;

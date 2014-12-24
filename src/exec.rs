@@ -1,12 +1,13 @@
 use table::{TableEntry, TableHeader, get_column};
-use parser::definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
-use parser::definitions::{AlterTableDef, AlterTable, Expression, BinaryOperator};
-use parser::definitions::{LiteralValue, DeleteDef};
-use parser::parser::rusql_parse;
+use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
+use definitions::{AlterTableDef, AlterTable, Expression, BinaryOperator};
+use definitions::{LiteralValue, DeleteDef};
 use rusql::Rusql;
 
+peg_file! parser("sql.rustpeg");
+
 pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &TableHeader|) {
-    for stmt in rusql_parse(sql_str.as_slice()).unwrap().iter() {
+    for stmt in parser::rusql_parse(sql_str.as_slice()).unwrap().iter() {
         match stmt {
             &RusqlStatement::AlterTable(ref alter_table_def) => alter_table(db, alter_table_def),
             &RusqlStatement::CreateTable(ref table_def) => db.create_table(table_def),

@@ -2,9 +2,9 @@
 // Adapted from: https://github.com/steveyen/sqld3/blob/master/sql.pegjs
 // And: https://www.sqlite.org/lang.html
 
-use super::definitions::*;
+use definitions::*;
 
-#[export]
+#[pub]
 rusql_stmt -> RusqlStatement
         = whitespace s:(alter_table_stmt) whitespace semicolon { s }
         / whitespace s:(create_table_stmt) whitespace semicolon { s }
@@ -13,7 +13,7 @@ rusql_stmt -> RusqlStatement
         / whitespace s:(insert_stmt) whitespace semicolon { s }
         / whitespace s:(select_stmt) whitespace semicolon { s }
 
-#[export]
+#[pub]
 rusql_parse -> Vec<RusqlStatement>
         = rusql_stmt ++ whitespace
 

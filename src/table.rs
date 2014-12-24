@@ -1,4 +1,4 @@
-use parser::definitions::{LiteralValue, ColumnDef};
+use definitions::{LiteralValue, ColumnDef};
 
 pub type TableEntry = Vec<LiteralValue>;
 pub type TableHeader = Vec<ColumnDef>;

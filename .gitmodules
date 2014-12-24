@@ -1,3 +1,0 @@
-[submodule "rust-peg"]
-	path = rust-peg
-	url = https://github.com/kevinmehall/rust-peg
