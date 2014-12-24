@@ -1,7 +1,7 @@
 use table::{TableEntry, TableHeader, get_column};
 use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
 use definitions::{AlterTableDef, AlterTable, Expression, BinaryOperator};
-use definitions::{LiteralValue, DeleteDef};
+use definitions::{LiteralValue, DeleteDef, InsertDataSource};
 use rusql::Rusql;
 
 peg_file! parser("sql.rustpeg");
@@ -40,8 +40,26 @@ fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
 }
 
 fn insert(db: &mut Rusql, insert_def: &InsertDef) {
-    db.get_mut_table(&insert_def.table_name)
-      .insert(&insert_def.column_data, &insert_def.column_names)
+    match insert_def.data_source {
+        InsertDataSource::Values(ref column_data) => {
+            let mut table = db.get_mut_table(&insert_def.table_name);
+            table.insert(column_data, &insert_def.column_names);
+        }
+        InsertDataSource::Select(ref select_def) => {
+            let mut new_entries: Vec<TableEntry> = Vec::new();
+
+            // FIXME make sure we're putting in valid entries for this table...
+            // FIXME Each entry gets cloned twice...
+
+            select(db, select_def, |entry, _| {
+                new_entries.push(entry.clone());
+            });
+            let mut table = db.get_mut_table(&insert_def.table_name);
+
+            table.entries.push_all(&*new_entries);
+        }
+        _ => {}
+    }
 }
 
 #[deriving(PartialEq)]

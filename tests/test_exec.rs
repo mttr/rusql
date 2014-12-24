@@ -160,3 +160,17 @@ fn test_delete_with() {
 
     assert!(results == expected);
 }
+
+#[test]
+fn test_insert_with_select() {
+    let mut db = init_db_and_insert_into_table();
+    let sql_str = "CREATE TABLE Foo2(Id INTEGER PRIMARY KEY, Name TEXT); \
+                   INSERT INTO Foo2 SELECT * FROM Foo;";
+
+    rusql_exec(&mut db, sql_str.to_string(), |_,_| {});
+
+    let foo = db.get_table(&"Foo".to_string());
+    let foo2 = db.get_table(&"Foo2".to_string());
+
+    assert!(foo.entries == foo2.entries);
+}

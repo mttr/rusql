@@ -94,14 +94,24 @@ drop_table_stmt -> RusqlStatement
 // https://www.sqlite.org/lang_insert.html
 
 insert_stmt -> RusqlStatement
-        = INSERT INTO n:table_name cn:insert_column_name? VALUES v:(insert_values ++ comma) {
+        = INSERT INTO n:table_name cn:insert_column_name? d:insert_data_source {
             let def = InsertDef {
                 table_name: n,
                 column_names: cn,
-                column_data: v,
+                data_source: d,
             };
             RusqlStatement::Insert(def)
         }
+
+insert_data_source -> InsertDataSource
+        = VALUES v:(insert_values ++ comma) { InsertDataSource::Values(v) }
+        / s:select_stmt {
+            match s {
+                RusqlStatement::Select(stmt) => InsertDataSource::Select(stmt),
+                _ => InsertDataSource::Error,
+            }
+        }
+        / DEFAULT VALUES { InsertDataSource::DefaultValues }
 
 insert_column_name -> Vec<String>
         = whitespace lparen s:(column_name ++ comma) rparen { s }
@@ -174,6 +184,7 @@ SELECT = whitespace "SELECT"
 ADD = whitespace1 "ADD"
 COLUMN = whitespace1 "COLUMN"
 CONSTRAINT = whitespace1 "CONSTRAINT"
+DEFAULT = whitespace1 "DEFAULT"
 FROM = whitespace1 "FROM"
 TABLE = whitespace1 "TABLE"
 INTEGER = whitespace1 "INTEGER"

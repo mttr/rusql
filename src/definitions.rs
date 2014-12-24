@@ -39,7 +39,14 @@ pub enum ResultColumn {
 pub struct InsertDef {
     pub table_name: String,
     pub column_names: Option<Vec<String>>,
-    pub column_data: Vec<Vec<LiteralValue>>,
+    pub data_source: InsertDataSource,
+}
+
+pub enum InsertDataSource {
+    Values(Vec<Vec<LiteralValue>>),
+    Select(SelectDef),
+    DefaultValues,
+    Error,
 }
 
 #[deriving(Clone)]
