@@ -1,6 +1,7 @@
 pub enum RusqlStatement {
     AlterTable(AlterTableDef),
     CreateTable(TableDef),
+    Delete(DeleteDef),
     DropTable(DropTableDef),
     Insert(InsertDef),
     Select(SelectDef),
@@ -77,4 +78,9 @@ pub enum Expression {
 #[deriving(Copy)]
 pub enum BinaryOperator {
     Equals,
+}
+
+pub struct DeleteDef {
+    pub name: String,
+    pub where_expr: Option<Expression>,
 }

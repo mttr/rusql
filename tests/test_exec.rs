@@ -125,8 +125,37 @@ fn test_insert_into_with_multiple_rows() {
                    INSERT INTO Ints(Id) VALUES (2), (4), (8), (15), (16), (23), (42); \
                    SELECT * FROM Ints;";
 
-    rusql_exec(&mut db,sql_str.to_string(), |entry, _| {
+    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
         results.push(entry[0].clone());
+    });
+
+    assert!(results == expected);
+}
+
+#[test]
+fn test_delete_all() {
+    let mut db = init_db_and_insert_into_table();
+
+    rusql_exec(&mut db, "DELETE FROM Foo;".to_string(), |_,_| {});
+
+    let table = db.get_table(&"Foo".to_string());
+    assert!(table.entries.len() == 0);
+}
+
+#[test]
+fn test_delete_with() {
+    let mut db = init_db_and_insert_into_table();
+    let expected = vec![1, 2, 4];
+    let mut results: Vec<int> = Vec::new();
+
+    let sql_str = "DELETE FROM Foo WHERE Id=3; \
+                   SELECT * FROM Foo;";
+
+    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+        match entry[0] {
+            LiteralValue::Integer(id) => results.push(id),
+            _ => {}
+        }
     });
 
     assert!(results == expected);

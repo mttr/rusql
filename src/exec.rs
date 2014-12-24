@@ -1,7 +1,7 @@
 use table::{TableEntry, TableHeader, get_column};
 use parser::definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
 use parser::definitions::{AlterTableDef, AlterTable, Expression, BinaryOperator};
-use parser::definitions::{LiteralValue};
+use parser::definitions::{LiteralValue, DeleteDef};
 use parser::parser::rusql_parse;
 use rusql::Rusql;
 
@@ -10,6 +10,7 @@ pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &Tabl
         match stmt {
             &RusqlStatement::AlterTable(ref alter_table_def) => alter_table(db, alter_table_def),
             &RusqlStatement::CreateTable(ref table_def) => db.create_table(table_def),
+            &RusqlStatement::Delete(ref delete_def) => delete(db, delete_def),
             &RusqlStatement::DropTable(ref drop_table_def) => db.drop_table(&drop_table_def.name),
             &RusqlStatement::Insert(ref insert_def) => insert(db, insert_def),
             &RusqlStatement::Select(ref select_def) => select(db, select_def, |a, b| callback(a, b)),
@@ -22,6 +23,18 @@ fn alter_table(db: &mut Rusql, alter_table_def: &AlterTableDef) {
         AlterTable::RenameTo(ref new_name) => db.rename_table(&alter_table_def.name, new_name),
         AlterTable::AddColumn(ref column_def) => db.get_mut_table(&alter_table_def.name)
                                                    .add_column(column_def),
+    }
+}
+
+fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
+    let table = db.get_mut_table(&delete_def.name);
+
+    if let Some(ref expr) = delete_def.where_expr {
+        // FIXME just making the borrow checker happy...
+        let header = table.header.clone();
+        table.entries.retain(|ref entry| !eval_boolean_expression(expr, *entry, &header));
+    } else {
+        table.entries.clear();
     }
 }
 

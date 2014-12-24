@@ -8,6 +8,7 @@ use super::definitions::*;
 rusql_stmt -> RusqlStatement
         = whitespace s:(alter_table_stmt) whitespace semicolon { s }
         / whitespace s:(create_table_stmt) whitespace semicolon { s }
+        / whitespace s:(delete_stmt) whitespace semicolon { s }
         / whitespace s:(drop_table_stmt) whitespace semicolon { s }
         / whitespace s:(insert_stmt) whitespace semicolon { s }
         / whitespace s:(select_stmt) whitespace semicolon { s }
@@ -64,6 +65,20 @@ column_constraint -> ColumnConstraint
             ColumnConstraint::PrimaryKey
         }
 
+// DELETE
+// https://www.sqlite.org/lang_delete.html
+delete_stmt -> RusqlStatement
+        = DELETE FROM n:qualified_table_name w:where_expr? {
+            let def = DeleteDef {
+                name: n,
+                where_expr: w,
+            };
+            RusqlStatement::Delete(def)
+        }
+
+qualified_table_name -> String
+        = table_name
+
 // DROP TABLE
 // https://www.sqlite.org/lang_droptable.html
 
@@ -113,9 +128,6 @@ result_column -> ResultColumn
 table_or_subquery -> String
         = table_name
 
-where_expr -> Expression
-        = WHERE whitespace1 e:expr { e }
-
 //
 // Expressions
 // https://www.sqlite.org/lang_expr.html
@@ -130,6 +142,9 @@ expr -> Expression
             e1:value b:binary_operator e2:expr { Expression::BinaryOperator((b, box e1, box e2)) }
             / v:value { v }
         )
+
+where_expr -> Expression
+        = WHERE whitespace1 e:expr { e }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -151,6 +166,7 @@ escape_char = "\\" .
 
 ALTER = whitespace "ALTER"
 CREATE = whitespace "CREATE"
+DELETE = whitespace "DELETE"
 DROP = whitespace "DROP"
 INSERT = whitespace "INSERT"
 SELECT = whitespace "SELECT"
