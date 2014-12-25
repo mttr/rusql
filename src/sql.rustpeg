@@ -12,6 +12,7 @@ rusql_stmt -> RusqlStatement
         / whitespace s:(drop_table_stmt) whitespace semicolon { s }
         / whitespace s:(insert_stmt) whitespace semicolon { s }
         / whitespace s:(select_stmt) whitespace semicolon { s }
+        / whitespace s:(update_stmt) whitespace semicolon { s }
 
 #[pub]
 rusql_parse -> Vec<RusqlStatement>
@@ -76,9 +77,6 @@ delete_stmt -> RusqlStatement
             RusqlStatement::Delete(def)
         }
 
-qualified_table_name -> String
-        = table_name
-
 // DROP TABLE
 // https://www.sqlite.org/lang_droptable.html
 
@@ -138,6 +136,25 @@ result_column -> ResultColumn
 table_or_subquery -> String
         = table_name
 
+// UPDATE
+// https://www.sqlite.org/lang_update.html
+
+update_stmt -> RusqlStatement
+        = UPDATE n:qualified_table_name SET s:(update_column_equals ++ comma) w:where_expr? {
+            let def = UpdateDef {
+                name: n,
+                set: s,
+                where_expr: w,
+            };
+            RusqlStatement::Update(def)
+        }
+
+update_column_equals -> (String, Expression)
+        = n:column_name equals e:expr { (n, e) }
+
+qualified_table_name -> String
+        = table_name
+
 //
 // Expressions
 // https://www.sqlite.org/lang_expr.html
@@ -180,6 +197,7 @@ DELETE = whitespace "DELETE"
 DROP = whitespace "DROP"
 INSERT = whitespace "INSERT"
 SELECT = whitespace "SELECT"
+UPDATE = whitespace "UPDATE"
 
 ADD = whitespace1 "ADD"
 COLUMN = whitespace1 "COLUMN"
@@ -192,6 +210,7 @@ INTO = whitespace1 "INTO"
 KEY = whitespace1 "KEY"
 PRIMARY = whitespace1 "PRIMARY"
 RENAME = whitespace1 "RENAME"
+SET = whitespace1 "SET"
 TEXT = whitespace1 "TEXT"
 TO = whitespace1 "TO"
 VALUES = whitespace1 "VALUES"

@@ -1,7 +1,7 @@
 use table::{TableEntry, TableHeader, get_column};
 use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
 use definitions::{AlterTableDef, AlterTable, Expression, BinaryOperator};
-use definitions::{LiteralValue, DeleteDef, InsertDataSource};
+use definitions::{LiteralValue, DeleteDef, InsertDataSource, UpdateDef};
 use rusql::Rusql;
 
 peg_file! parser("sql.rustpeg");
@@ -15,6 +15,7 @@ pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &Tabl
             &RusqlStatement::DropTable(ref drop_table_def) => db.drop_table(&drop_table_def.name),
             &RusqlStatement::Insert(ref insert_def) => insert(db, insert_def),
             &RusqlStatement::Select(ref select_def) => select(db, select_def, |a, b| callback(a, b)),
+            &RusqlStatement::Update(ref update_def) => update(db, update_def),
         }
     }
 }
@@ -62,11 +63,36 @@ fn insert(db: &mut Rusql, insert_def: &InsertDef) {
     }
 }
 
+fn update(db: &mut Rusql, update_def: &UpdateDef) {
+    let mut table = db.get_mut_table(&update_def.name);
+
+    for entry in table.entries.iter_mut() {
+        if let Some(ref expr) = update_def.where_expr {
+            if !eval_boolean_expression(expr, entry, &table.header) {
+                continue;
+            }
+        }
+
+        for &(ref name, ref expr) in update_def.set.iter() {
+            let x = table.header.iter().position(|ref cols| &cols.name == name).unwrap();
+
+            entry[x] = expr_to_literal(expr);
+        }
+    }
+}
+
 #[deriving(PartialEq)]
 enum ExpressionResult {
     Boolean(bool),
     Value(LiteralValue),
     //Null,
+}
+
+fn expr_to_literal(expr: &Expression) -> LiteralValue {
+    match expr {
+        &Expression::LiteralValue(ref literal_value) => literal_value.clone(),
+        _ => LiteralValue::Null,
+    }
 }
 
 fn eval_boolean_expression(expr: &Expression, entry: &TableEntry, head: &TableHeader) -> bool {

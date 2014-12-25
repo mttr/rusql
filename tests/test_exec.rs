@@ -174,3 +174,29 @@ fn test_insert_with_select() {
 
     assert!(foo.entries == foo2.entries);
 }
+
+#[test]
+fn test_update() {
+    let mut db = init_db_and_insert_into_table();
+    let sql_str = "UPDATE Foo SET Name=\"Qux\"; \
+                   SELECT * FROM Foo;";
+
+    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+        assert!(entry[1] == LiteralValue::Text("Qux".to_string()));
+    });
+}
+
+#[test]
+fn test_update_where() {
+    let mut db = init_db_and_insert_into_table();
+    let sql_str = "UPDATE Foo SET Name=\"Qux\" WHERE Id=3; \
+                   SELECT * FROM Foo WHERE Id=3;";
+    let expected = vec![LiteralValue::Text("Qux".to_string())];
+    let mut results: Vec<LiteralValue> = Vec::new();
+
+    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+        results.push(entry[1].clone());
+    });
+
+    assert!(results == expected);
+}

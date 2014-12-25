@@ -5,6 +5,7 @@ pub enum RusqlStatement {
     DropTable(DropTableDef),
     Insert(InsertDef),
     Select(SelectDef),
+    Update(UpdateDef),
 }
 
 #[deriving(Copy, Clone)]
@@ -89,5 +90,11 @@ pub enum BinaryOperator {
 
 pub struct DeleteDef {
     pub name: String,
+    pub where_expr: Option<Expression>,
+}
+
+pub struct UpdateDef {
+    pub name: String,
+    pub set: Vec<(String, Expression)>,
     pub where_expr: Option<Expression>,
 }
