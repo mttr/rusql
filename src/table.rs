@@ -1,45 +1,46 @@
-use definitions::{LiteralValue, ColumnDef};
+use definitions::{LiteralValue, ColumnDef, ColumnConstraint};
+
+use std::collections::BTreeMap;
 
 pub type TableEntry = Vec<LiteralValue>;
 pub type TableHeader = Vec<ColumnDef>;
 
-pub struct Table<'a> {
+pub struct Table {
     pub header: TableHeader,
-    pub entries: Vec<TableEntry>,
+    pub data: BTreeMap<uint, TableEntry>,
+    pub pk: Option<uint>,
 }
 
-impl<'a> Table<'a> {
-    pub fn get_column_def_by_name(&'a self, name: String) -> Option<&'a ColumnDef> {
+impl Table {
+    pub fn get_column_def_by_name(&self, name: String) -> Option<&ColumnDef> {
         self.header.iter().find(|&cols| cols.name == name)
     }
 
-    pub fn get_column_index(&'a self, name: String) -> Option<uint> {
+    pub fn get_column_index(&self, name: String) -> Option<uint> {
         self.header.iter().position(|ref cols| cols.name == name)
     }
 
-    pub fn has_entry(&'a self, pk: int) -> bool {
-        let index = self.get_column_index("Id".to_string()).unwrap();
-
-        self.entries.iter().any(|entry| entry[index] == LiteralValue::Integer(pk))
+    pub fn has_entry(&self, pk: uint) -> bool {
+        self.data.contains_key(&pk)
     }
 
-    pub fn assert_size(&'a self) {
+    pub fn assert_size(&self) {
         let header_size = self.header.len();
 
-        for entry in self.entries.iter() {
+        for entry in self.data.values() {
             assert!(entry.len() == header_size);
         }
     }
 
-    pub fn add_column(&'a mut self, column_def: &ColumnDef) {
+    pub fn add_column(&mut self, column_def: &ColumnDef) {
         self.header.push(column_def.clone());
 
-        for entry in self.entries.iter_mut() {
+        for (_, entry) in self.data.iter_mut() {
             entry.push(LiteralValue::Null);
         }
     }
 
-    pub fn insert(&'a mut self, column_data: &Vec<Vec<LiteralValue>>,
+    pub fn insert(&mut self, column_data: &Vec<Vec<LiteralValue>>,
                   specified_columns: &Option<Vec<String>>) {
         for column_data in column_data.iter() {
             if let &Some(ref column_names) = specified_columns {
@@ -50,19 +51,50 @@ impl<'a> Table<'a> {
                     entry[self.get_column_index(name.clone()).unwrap()] = data.clone();
                 }
 
-                self.entries.push(entry);
+                self.push_entry(entry);
             } else {
-                self.entries.push(column_data.clone());
+                self.push_entry(column_data.clone());
             }
         }
     }
 
-    pub fn delete_where(&'a mut self, f: |entry: &TableEntry| -> bool) {
-        self.entries.retain(|entry| !f(entry));
+    pub fn push_entry(&mut self, entry: TableEntry) {
+        if let Some(i) = self.pk {
+            let pk = entry[i].clone().to_uint();
+            self.data.insert(pk, entry);
+        } else {
+            let len = self.data.len();
+            self.data.insert(len, entry);
+        }
     }
 
-    pub fn clear(&'a mut self) {
-        self.entries.clear();
+    pub fn delete_where(&mut self, f: |entry: &TableEntry| -> bool) {
+        let mut keys: Vec<uint> = Vec::new();
+
+        for (key, entry) in self.data.iter() {
+            if !f(entry) {
+                continue;
+            }
+            keys.push(key.clone());
+        }
+
+        for key in keys.iter() {
+            self.data.remove(key);
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
+
+    pub fn process_constraints(&mut self) {
+        for (i, column) in self.header.iter().enumerate() {
+            for constraint in column.column_constraints.iter() {
+                match constraint {
+                    &ColumnConstraint::PrimaryKey => self.pk = Some(i),
+                }
+            }
+        }
     }
 }
 

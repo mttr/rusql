@@ -36,7 +36,7 @@ fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
         let header = table.header.clone();
         table.delete_where(|entry| eval_boolean_expression(expr, entry, &header));
     } else {
-        table.entries.clear();
+        table.clear();
     }
 }
 
@@ -57,7 +57,9 @@ fn insert(db: &mut Rusql, insert_def: &InsertDef) {
             });
             let mut table = db.get_mut_table(&insert_def.table_name);
 
-            table.entries.push_all(&*new_entries);
+            for entry in new_entries.into_iter() {
+                table.push_entry(entry);
+            }
         }
         _ => {}
     }
@@ -66,7 +68,7 @@ fn insert(db: &mut Rusql, insert_def: &InsertDef) {
 fn update(db: &mut Rusql, update_def: &UpdateDef) {
     let mut table = db.get_mut_table(&update_def.name);
 
-    for entry in table.entries.iter_mut() {
+    for (_, entry) in table.data.iter_mut() {
         if let Some(ref expr) = update_def.where_expr {
             if !eval_boolean_expression(expr, entry, &table.header) {
                 continue;
@@ -130,7 +132,7 @@ fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableEntry, &Table
             for name in select_def.table_or_subquery.iter() {
                 let table = db.get_table(name);
 
-                for entry in table.entries.iter() {
+                for entry in table.data.values() {
                     if let Some(ref expr) = select_def.where_expr {
                         if !eval_boolean_expression(expr, entry, &table.header) {
                             continue;

@@ -27,6 +27,15 @@ pub enum LiteralValue {
     Null,
 }
 
+impl LiteralValue {
+    pub fn to_uint(self) -> uint {
+        match self {
+            LiteralValue::Integer(i) => i as uint,
+            _ => 0, // FIXME ???
+        }
+    }
+}
+
 pub struct TableDef {
     pub table_name: String,
     pub columns: Vec<ColumnDef>,

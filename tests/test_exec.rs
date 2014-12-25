@@ -2,7 +2,7 @@ extern crate rusql;
 
 use rusql::{rusql_exec, Rusql, LiteralValue};
 
-fn init_db_with_table<'a>() -> Rusql<'a> {
+fn init_db_with_table() -> Rusql {
     let mut db = rusql::Rusql::new();
     let sql_str = "CREATE TABLE Foo(Id INTEGER PRIMARY KEY, Name TEXT);".to_string();
     rusql_exec(&mut db, sql_str, |_,_| {});
@@ -10,7 +10,7 @@ fn init_db_with_table<'a>() -> Rusql<'a> {
     db
 }
 
-fn init_db_and_insert_into_table<'a>() -> Rusql<'a> {
+fn init_db_and_insert_into_table() -> Rusql {
     let mut db = init_db_with_table();
     let sql_strs = vec![
         "INSERT INTO Foo VALUES(1, \"Bar1\");",
@@ -139,7 +139,7 @@ fn test_delete_all() {
     rusql_exec(&mut db, "DELETE FROM Foo;".to_string(), |_,_| {});
 
     let table = db.get_table(&"Foo".to_string());
-    assert!(table.entries.len() == 0);
+    assert!(table.data.len() == 0);
 }
 
 #[test]
@@ -172,7 +172,7 @@ fn test_insert_with_select() {
     let foo = db.get_table(&"Foo".to_string());
     let foo2 = db.get_table(&"Foo2".to_string());
 
-    assert!(foo.entries == foo2.entries);
+    assert!(foo.data == foo2.data);
 }
 
 #[test]
