@@ -39,7 +39,7 @@ impl<'a> Table<'a> {
         }
     }
 
-    pub fn insert(&'a mut self, column_data: &Vec<Vec<LiteralValue>>, 
+    pub fn insert(&'a mut self, column_data: &Vec<Vec<LiteralValue>>,
                   specified_columns: &Option<Vec<String>>) {
         for column_data in column_data.iter() {
             if let &Some(ref column_names) = specified_columns {
