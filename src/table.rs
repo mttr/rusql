@@ -4,12 +4,13 @@ use std::collections::BTreeMap;
 
 pub type TableRow = Vec<LiteralValue>;
 pub type TableHeader = Vec<ColumnDef>;
+pub type PkType = uint;
 
 pub struct Table {
     pub name: String,
     pub header: TableHeader,
-    pub data: BTreeMap<uint, TableRow>,
-    pub pk: Option<uint>,
+    pub data: BTreeMap<PkType, TableRow>,
+    pub pk: Option<PkType>,
 }
 
 impl Table {
@@ -29,7 +30,7 @@ impl Table {
         self.header.iter().position(|ref cols| cols.name == name)
     }
 
-    pub fn has_row(&self, pk: uint) -> bool {
+    pub fn has_row(&self, pk: PkType) -> bool {
         self.data.contains_key(&pk)
     }
 
@@ -84,7 +85,7 @@ impl Table {
     }
 
     pub fn delete_where(&mut self, f: |row: &TableRow| -> bool) {
-        let mut keys: Vec<uint> = Vec::new();
+        let mut keys: Vec<PkType> = Vec::new();
 
         for (key, row) in self.data.iter() {
             if !f(row) {
