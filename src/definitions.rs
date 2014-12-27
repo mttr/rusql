@@ -28,9 +28,9 @@ pub enum LiteralValue {
 }
 
 impl LiteralValue {
-    pub fn to_uint(self) -> uint {
+    pub fn to_uint(&self) -> uint {
         match self {
-            LiteralValue::Integer(i) => i as uint,
+            &LiteralValue::Integer(i) => i as uint,
             _ => 0, // FIXME ???
         }
     }
@@ -88,6 +88,7 @@ pub struct AlterTableDef {
 
 pub enum Expression {
     LiteralValue(LiteralValue),
+    TableName((String, Box<Expression>)),
     ColumnName(String),
     BinaryOperator((BinaryOperator, Box<Expression>, Box<Expression>)),
 }

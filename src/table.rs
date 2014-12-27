@@ -12,6 +12,13 @@ pub struct Table {
 }
 
 impl Table {
+    pub fn new_result_table(header: TableHeader) -> Table {
+        Table {
+            header: header,
+            data: BTreeMap::new(),
+            pk: None,
+        }
+    }
     pub fn get_column_def_by_name(&self, name: String) -> Option<&ColumnDef> {
         self.header.iter().find(|&cols| cols.name == name)
     }
@@ -37,6 +44,12 @@ impl Table {
 
         for (_, entry) in self.data.iter_mut() {
             entry.push(LiteralValue::Null);
+        }
+    }
+
+    pub fn add_columns(&mut self, column_defs: Vec<&ColumnDef>) {
+        for def in column_defs.iter() {
+            self.add_column(*def);
         }
     }
 

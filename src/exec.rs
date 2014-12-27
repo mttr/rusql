@@ -1,4 +1,4 @@
-use table::{TableEntry, TableHeader, get_column};
+use table::{TableEntry, TableHeader, Table, get_column};
 use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
 use definitions::{AlterTableDef, AlterTable, Expression, BinaryOperator};
 use definitions::{LiteralValue, DeleteDef, InsertDataSource, UpdateDef};
@@ -34,7 +34,7 @@ fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
     if let Some(ref expr) = delete_def.where_expr {
         // FIXME just making the borrow checker happy...
         let header = table.header.clone();
-        table.delete_where(|entry| eval_boolean_expression(expr, entry, &header));
+        table.delete_where(|entry| ExpressionEvaluator::new(entry, &header, None).eval_bool(expr));
     } else {
         table.clear();
     }
@@ -70,7 +70,7 @@ fn update(db: &mut Rusql, update_def: &UpdateDef) {
 
     for (_, entry) in table.data.iter_mut() {
         if let Some(ref expr) = update_def.where_expr {
-            if !eval_boolean_expression(expr, entry, &table.header) {
+            if !ExpressionEvaluator::new(entry, &table.header, None).eval_bool(expr) {
                 continue;
             }
         }
@@ -90,6 +90,62 @@ enum ExpressionResult {
     //Null,
 }
 
+struct ExpressionEvaluator<'a> {
+    // FIXME wtf am I doing?!?!?!
+    db: Option<&'a &'a mut Rusql>,
+    entry: &'a TableEntry,
+    head: &'a TableHeader,
+}
+
+impl<'a> ExpressionEvaluator<'a> {
+    pub fn new(entry: &'a TableEntry, head: &'a TableHeader, db: Option<&'a &'a mut Rusql>) -> ExpressionEvaluator<'a> {
+        ExpressionEvaluator {
+            db: db,
+            entry: entry,
+            head: head,
+        }
+    }
+
+    fn eval_expr(&'a self, expr: &Expression) -> ExpressionResult {
+        match expr {
+            &Expression::LiteralValue(ref value) => ExpressionResult::Value(value.clone()),
+            &Expression::TableName(_) => self.eval_column_name(expr, None),
+            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.entry, self.head)),
+            &Expression::BinaryOperator((b, ref exp1, ref exp2)) => self.eval_binary_operator(b, &**exp1,
+                                                                                              &**exp2),
+        }
+    }
+
+    pub fn eval_bool(&'a self, expr: &Expression) -> bool {
+        match self.eval_expr(expr) {
+            ExpressionResult::Boolean(b) => b,
+            _ => false,
+        }
+    }
+
+    fn eval_binary_operator(&'a self,
+                            operator: BinaryOperator,
+                            exp1: &Expression,
+                            exp2: &Expression) -> ExpressionResult {
+        match operator {
+            BinaryOperator::Equals => {
+                ExpressionResult::Boolean(self.eval_expr(exp1) == self.eval_expr(exp2))
+            }
+        }
+    }
+
+    fn eval_column_name(&'a self, expr: &Expression, table: Option<&Table>) -> ExpressionResult {
+        match expr {
+            &Expression::TableName((ref name, ref expr)) => {
+                //let requested_table = self.db.get_table(name).unwrap();
+                //ExpressionResult::Value(self.eval_column_name(expr)
+                ExpressionResult::Boolean(false)
+            }
+            _ => ExpressionResult::Boolean(false),
+        }
+    }
+}
+
 fn expr_to_literal(expr: &Expression) -> LiteralValue {
     match expr {
         &Expression::LiteralValue(ref literal_value) => literal_value.clone(),
@@ -97,50 +153,51 @@ fn expr_to_literal(expr: &Expression) -> LiteralValue {
     }
 }
 
-fn eval_boolean_expression(expr: &Expression, entry: &TableEntry, head: &TableHeader) -> bool {
-    match eval_expr(expr, entry, head) {
-        ExpressionResult::Boolean(b) => b,
-        _ => false,
-    }
-}
+fn product(tables: Vec<&Table>, result_table: &mut Table, new_entry_opt: Option<TableEntry>) {
+    let mut remaining = tables.clone();
+    if let Some(table) = remaining.remove(0) {
+        for entry in table.data.values() {
+            let mut new_entry: TableEntry = if let Some(ref new_entry) = new_entry_opt {
+                new_entry.clone()
+            } else {
+                Vec::new()
+            };
 
-fn eval_binary_operator(operator: BinaryOperator,
-                        exp1: &Expression,
-                        exp2: &Expression,
-                        entry: &TableEntry,
-                        head: &TableHeader) -> ExpressionResult {
-    match operator {
-        BinaryOperator::Equals => {
-            ExpressionResult::Boolean(eval_expr(exp1, entry, head) == eval_expr(exp2, entry, head))
+            new_entry.push_all(&*entry.clone());
+
+            product(remaining.clone(), result_table, Some(new_entry));
         }
-    }
-}
-
-fn eval_expr(expr: &Expression, entry: &TableEntry, head: &TableHeader) -> ExpressionResult {
-    match expr {
-        &Expression::LiteralValue(ref value) => ExpressionResult::Value(value.clone()),
-        &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, entry, head)),
-        &Expression::BinaryOperator((b, ref exp1, ref exp2)) => eval_binary_operator(b, &**exp1,
-                                                                                     &**exp2,
-                                                                                     entry, head),
+    } else {
+        if let Some(new_entry) = new_entry_opt {
+            result_table.push_entry(new_entry);
+        }
     }
 }
 
 fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableEntry, &TableHeader|) {
-    match select_def.result_column {
-        ResultColumn::Asterisk => {
-            for name in select_def.table_or_subquery.iter() {
-                let table = db.get_table(name);
+    let mut input_tables: Vec<&Table> = Vec::new();
+    let mut result_header: TableHeader = Vec::new();
 
-                for entry in table.data.values() {
-                    if let Some(ref expr) = select_def.where_expr {
-                        if !eval_boolean_expression(expr, entry, &table.header) {
-                            continue;
-                        }
-                    }
-                    callback(entry, &table.header);
-                }
+    for name in select_def.table_or_subquery.iter() {
+        let table = db.get_table(name);
+        input_tables.push(table);
+
+        match select_def.result_column {
+            ResultColumn::Asterisk => result_header.push_all(&*table.header.clone()),
+        }
+    }
+
+    let mut result_table = Table::new_result_table(result_header);
+
+    product(input_tables.clone(), &mut result_table, None);
+
+    // FIXME would it be better if we did this as each row is generated?
+    for entry in result_table.data.values() {
+        if let Some(ref expr) = select_def.where_expr {
+            if !ExpressionEvaluator::new(entry, &result_table.header, Some(&db)).eval_bool(expr) {
+                continue;
             }
         }
+        callback(entry, &result_table.header);
     }
 }

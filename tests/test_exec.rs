@@ -200,3 +200,34 @@ fn test_update_where() {
 
     assert!(results == expected);
 }
+
+#[test]
+fn test_select_with_multiple_tables() {
+    let mut db = Rusql::new();
+
+    let sql_str = "CREATE TABLE a(Num INTEGER); \
+                   CREATE TABLE b(Num INTEGER); \
+                   CREATE TABLE c(Num INTEGER); \
+                   INSERT INTO a VALUES(1), (2), (3); \
+                   INSERT INTO b VALUES(1), (2); \
+                   INSERT INTO c VALUES(1); \
+                   SELECT * FROM a, b, c;";
+
+    let expected = vec![vec![1, 1, 1],
+                        vec![1, 2, 1],
+                        vec![2, 1, 1],
+                        vec![2, 2, 1],
+                        vec![3, 1, 1],
+                        vec![3, 2, 1]];
+    let mut results: Vec<Vec<int>> = Vec::new();
+
+    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+        let mut row: Vec<int> = Vec::new();
+        for column in entry.iter() {
+            row.push(column.to_uint() as int);
+        }
+        results.push(row);
+    });
+
+    assert_eq!(results, expected);
+}

@@ -29,22 +29,19 @@ fn main() {
                    INSERT INTO Yarp VALUES(2, \"Yarp2\"); \
                    SELECT * FROM Foo, Yarp;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, header| {
-        for (column, def) in entry.iter().zip(header.iter()) {
-            println!("{}: {}", def.name, column);
+    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+        for column in entry.iter() {
+            print!("{} | ", column);
         }
+        print!("\n");
     });
 }
 ```
 
 ``` sh
 $ ./target/examples/example 
-Id: Integer(1)
-Name: Text(Bar1)
-Id: Integer(2)
-Name: Text(Bar2)
-Id: Integer(1)
-Name: Text(Yarp1)
-Id: Integer(2)
-Name: Text(Yarp2)
+Integer(1) | Text(Bar1) | Integer(1) | Text(Yarp1) |
+Integer(1) | Text(Bar1) | Integer(2) | Text(Yarp2) |
+Integer(2) | Text(Bar2) | Integer(1) | Text(Yarp1) |
+Integer(2) | Text(Bar2) | Integer(2) | Text(Yarp2) |
 ```

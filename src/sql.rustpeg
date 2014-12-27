@@ -162,7 +162,13 @@ qualified_table_name -> String
 
 value -> Expression
     = l:literal_value { Expression::LiteralValue(l) }
-    / n:column_name { Expression::ColumnName(n) }
+    / t:(a:table_name dot { a })? n:column_name {
+        if let Some(table_name) = t {
+            Expression::TableName((table_name, box Expression::ColumnName(n)))
+        } else {
+            Expression::ColumnName(n)
+        }
+    }
 
 expr -> Expression
         = whitespace (
@@ -184,6 +190,7 @@ comma = ","
 asterisk = "*"
 equals = "="
 equals2 = "=="
+dot = "."
 
 string_literal -> String
         = "\"" s:string "\"" { s }
