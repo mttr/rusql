@@ -114,8 +114,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
     fn eval_expr(&'a self, expr: &Expression) -> ExpressionResult {
         match expr {
             &Expression::LiteralValue(ref value) => ExpressionResult::Value(value.clone()),
-            &Expression::TableName(_) => self.eval_column_name(expr, None, None),
-            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.row, self.head, None)),
+            &Expression::TableName(_) | &Expression::ColumnName(_) => self.eval_column_name(expr, None, None),
             &Expression::BinaryOperator((b, ref exp1, ref exp2)) => self.eval_binary_operator(b, &**exp1,
                                                                                               &**exp2),
         }
@@ -159,7 +158,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 self.eval_column_name(&**expr, table, Some(offset))
             }
             &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.row, self.head, offset)),
-            _ => ExpressionResult::Boolean(false),
+            _ => ExpressionResult::Null,
         }
     }
 }
