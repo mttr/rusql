@@ -40,8 +40,8 @@ fn main() {
 
 ``` sh
 $ ./target/examples/example 
-Integer(1) | Text(Bar1) | Integer(1) | Text(Yarp1) |
-Integer(1) | Text(Bar1) | Integer(2) | Text(Yarp2) |
-Integer(2) | Text(Bar2) | Integer(1) | Text(Yarp1) |
-Integer(2) | Text(Bar2) | Integer(2) | Text(Yarp2) |
+1 | Bar1 | 1 | Yarp1 |
+1 | Bar1 | 2 | Yarp2 |
+2 | Bar2 | 1 | Yarp1 |
+2 | Bar2 | 2 | Yarp2 |
 ```

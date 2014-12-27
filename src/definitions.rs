@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub enum RusqlStatement {
     AlterTable(AlterTableDef),
     CreateTable(TableDef),
@@ -19,7 +21,7 @@ pub enum ColumnConstraint {
     PrimaryKey,
 }
 
-#[deriving(Show, Clone, PartialEq)]
+#[deriving(Clone, PartialEq)]
 pub enum LiteralValue {
     Integer(int),
     Text(String),
@@ -32,6 +34,17 @@ impl LiteralValue {
         match self {
             &LiteralValue::Integer(i) => i as uint,
             _ => 0, // FIXME ???
+        }
+    }
+}
+
+impl fmt::Show for LiteralValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &LiteralValue::Integer(ref i) => write!(f, "{}", i),
+            &LiteralValue::Text(ref t) => write!(f, "{}", t),
+            &LiteralValue::Real(ref r) => write!(f, "{}", r),
+            &LiteralValue::Null => write!(f, "null"),
         }
     }
 }
