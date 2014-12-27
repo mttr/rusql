@@ -6,6 +6,7 @@ pub type TableEntry = Vec<LiteralValue>;
 pub type TableHeader = Vec<ColumnDef>;
 
 pub struct Table {
+    pub name: String,
     pub header: TableHeader,
     pub data: BTreeMap<uint, TableEntry>,
     pub pk: Option<uint>,
@@ -14,6 +15,7 @@ pub struct Table {
 impl Table {
     pub fn new_result_table(header: TableHeader) -> Table {
         Table {
+            name: "".to_string(),
             header: header,
             data: BTreeMap::new(),
             pk: None,
@@ -111,6 +113,7 @@ impl Table {
     }
 }
 
-pub fn get_column(name: &String, entry: &TableEntry, head: &TableHeader) -> LiteralValue {
-    entry[head.iter().position(|ref def| def.name == *name).unwrap()].clone()
+pub fn get_column(name: &String, entry: &TableEntry, head: &TableHeader, offset: Option<uint>) -> LiteralValue {
+    let x = if let Some(x) = offset { x } else { 0 };
+    entry[head.iter().position(|ref def| def.name == *name).unwrap() + x].clone()
 }

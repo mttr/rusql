@@ -87,30 +87,30 @@ fn update(db: &mut Rusql, update_def: &UpdateDef) {
 enum ExpressionResult {
     Boolean(bool),
     Value(LiteralValue),
-    //Null,
+    Null,
 }
 
-struct ExpressionEvaluator<'a> {
+struct ExpressionEvaluator<'a, 'b> {
     // FIXME wtf am I doing?!?!?!
-    db: Option<&'a &'a mut Rusql>,
     entry: &'a TableEntry,
     head: &'a TableHeader,
+    tables: Option<Vec<&'b Table>>,
 }
 
-impl<'a> ExpressionEvaluator<'a> {
-    pub fn new(entry: &'a TableEntry, head: &'a TableHeader, db: Option<&'a &'a mut Rusql>) -> ExpressionEvaluator<'a> {
+impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
+    pub fn new(entry: &'a TableEntry, head: &'a TableHeader, tables: Option<Vec<&'b Table>>) -> ExpressionEvaluator<'a, 'b> {
         ExpressionEvaluator {
-            db: db,
             entry: entry,
             head: head,
+            tables: tables,
         }
     }
 
     fn eval_expr(&'a self, expr: &Expression) -> ExpressionResult {
         match expr {
             &Expression::LiteralValue(ref value) => ExpressionResult::Value(value.clone()),
-            &Expression::TableName(_) => self.eval_column_name(expr, None),
-            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.entry, self.head)),
+            &Expression::TableName(_) => self.eval_column_name(expr, None, None),
+            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.entry, self.head, None)),
             &Expression::BinaryOperator((b, ref exp1, ref exp2)) => self.eval_binary_operator(b, &**exp1,
                                                                                               &**exp2),
         }
@@ -134,13 +134,26 @@ impl<'a> ExpressionEvaluator<'a> {
         }
     }
 
-    fn eval_column_name(&'a self, expr: &Expression, table: Option<&Table>) -> ExpressionResult {
+    fn eval_column_name(&'a self, expr: &Expression, table: Option<&Table>, offset: Option<uint>) -> ExpressionResult {
         match expr {
             &Expression::TableName((ref name, ref expr)) => {
-                //let requested_table = self.db.get_table(name).unwrap();
-                //ExpressionResult::Value(self.eval_column_name(expr)
-                ExpressionResult::Boolean(false)
+                let mut table_opt: Option<&Table> = None;
+                let mut offset = 0u;
+
+                for table in self.tables.clone().unwrap().into_iter() {
+                    if &table.name == name {
+                        table_opt = Some(table);
+                        break;
+                    }
+                    offset = offset + table.header.len();
+                }
+                if !table_opt.is_some() {
+                    return ExpressionResult::Null;
+                }
+
+                self.eval_column_name(&**expr, table, Some(offset))
             }
+            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.entry, self.head, offset)),
             _ => ExpressionResult::Boolean(false),
         }
     }
@@ -194,7 +207,7 @@ fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableEntry, &Table
     // FIXME would it be better if we did this as each row is generated?
     for entry in result_table.data.values() {
         if let Some(ref expr) = select_def.where_expr {
-            if !ExpressionEvaluator::new(entry, &result_table.header, Some(&db)).eval_bool(expr) {
+            if !ExpressionEvaluator::new(entry, &result_table.header, Some(input_tables.clone())).eval_bool(expr) {
                 continue;
             }
         }

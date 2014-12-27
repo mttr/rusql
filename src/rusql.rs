@@ -30,6 +30,7 @@ impl Rusql {
 
     pub fn create_table(&mut self, table_def: &TableDef) {
         let mut table = Table {
+            name: table_def.table_name.clone(),
             header: table_def.columns.clone(),
             data: BTreeMap::new(),
             pk: None,

@@ -162,13 +162,8 @@ qualified_table_name -> String
 
 value -> Expression
     = l:literal_value { Expression::LiteralValue(l) }
-    / t:(a:table_name dot { a })? n:column_name {
-        if let Some(table_name) = t {
-            Expression::TableName((table_name, box Expression::ColumnName(n)))
-        } else {
-            Expression::ColumnName(n)
-        }
-    }
+    / t:table_name dot n:column_name { Expression::TableName((t, box Expression::ColumnName(n))) }
+    / n:column_name { Expression::ColumnName(n) }
 
 expr -> Expression
         = whitespace (
@@ -231,7 +226,7 @@ name -> String
         = whitespace1 n:nws_name { n }
 
 table_name -> String
-        = name
+        = whitespace n:nws_name { n }
 
 column_name -> String
         = whitespace n:nws_name { n }
