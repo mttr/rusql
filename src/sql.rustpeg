@@ -16,7 +16,7 @@ rusql_stmt -> RusqlStatement
 
 #[pub]
 rusql_parse -> Vec<RusqlStatement>
-        = rusql_stmt ++ whitespace
+        = (r:rusql_stmt whitespace { r })+
 
 //
 // Statements

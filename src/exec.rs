@@ -7,16 +7,21 @@ use rusql::Rusql;
 peg_file! parser("sql.rustpeg");
 
 pub fn rusql_exec(db: &mut Rusql, sql_str: String, callback: |&TableEntry, &TableHeader|) {
-    for stmt in parser::rusql_parse(sql_str.as_slice()).unwrap().iter() {
-        match stmt {
-            &RusqlStatement::AlterTable(ref alter_table_def) => alter_table(db, alter_table_def),
-            &RusqlStatement::CreateTable(ref table_def) => db.create_table(table_def),
-            &RusqlStatement::Delete(ref delete_def) => delete(db, delete_def),
-            &RusqlStatement::DropTable(ref drop_table_def) => db.drop_table(&drop_table_def.name),
-            &RusqlStatement::Insert(ref insert_def) => insert(db, insert_def),
-            &RusqlStatement::Select(ref select_def) => select(db, select_def, |a, b| callback(a, b)),
-            &RusqlStatement::Update(ref update_def) => update(db, update_def),
+    match parser::rusql_parse(sql_str.as_slice()) {
+        Ok(res) => {
+            for stmt in res.iter() {
+                match stmt {
+                    &RusqlStatement::AlterTable(ref alter_table_def) => alter_table(db, alter_table_def),
+                    &RusqlStatement::CreateTable(ref table_def) => db.create_table(table_def),
+                    &RusqlStatement::Delete(ref delete_def) => delete(db, delete_def),
+                    &RusqlStatement::DropTable(ref drop_table_def) => db.drop_table(&drop_table_def.name),
+                    &RusqlStatement::Insert(ref insert_def) => insert(db, insert_def),
+                    &RusqlStatement::Select(ref select_def) => select(db, select_def, |a, b| callback(a, b)),
+                    &RusqlStatement::Update(ref update_def) => update(db, update_def),
+                }
+            }
         }
+        Err(e) => println!("syntax error: {}", e),
     }
 }
 
