@@ -1,10 +1,13 @@
 use definitions::{LiteralValue, ColumnDef, ColumnConstraint};
 
 use std::collections::BTreeMap;
+use std::fmt;
 
 pub type TableRow = Vec<LiteralValue>;
 pub type TableHeader = Vec<ColumnDef>;
 pub type PkType = uint;
+
+pub struct RowFormat<'a>(pub &'a TableRow);
 
 pub struct Table {
     pub name: String,
@@ -111,6 +114,15 @@ impl Table {
                 }
             }
         }
+    }
+}
+
+impl<'a> fmt::Show for RowFormat<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for column in self.0.iter() {
+            write!(f, "{} | ", column).ok();
+        }
+        Ok(())
     }
 }
 

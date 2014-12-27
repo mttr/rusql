@@ -1,6 +1,6 @@
 extern crate rusql;
 
-use rusql::{rusql_exec, Rusql};
+use rusql::{rusql_exec, Rusql, RowFormat};
 
 fn main() {
     let mut db = Rusql::new();
@@ -14,9 +14,6 @@ fn main() {
                    SELECT * FROM Foo, Yarp;";
 
     rusql_exec(&mut db, sql_str, |row, _| {
-        for column in row.iter() {
-            print!("{} | ", column);
-        }
-        print!("\n");
+        println!("{}", RowFormat(row));
     });
 }

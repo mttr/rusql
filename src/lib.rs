@@ -5,7 +5,7 @@
 pub use exec::rusql_exec;
 pub use definitions::{ColumnDef, LiteralValue};
 pub use rusql::Rusql;
-pub use table::{TableRow, TableHeader};
+pub use table::{TableRow, TableHeader, RowFormat};
 
 pub mod definitions;
 pub mod table;
