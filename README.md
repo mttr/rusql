@@ -29,8 +29,8 @@ fn main() {
                    INSERT INTO Yarp VALUES(2, \"Yarp2\"); \
                    SELECT * FROM Foo, Yarp;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
-        for column in entry.iter() {
+    rusql_exec(&mut db, sql_str, |row, _| {
+        for column in row.iter() {
             print!("{} | ", column);
         }
         print!("\n");

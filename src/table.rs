@@ -2,13 +2,13 @@ use definitions::{LiteralValue, ColumnDef, ColumnConstraint};
 
 use std::collections::BTreeMap;
 
-pub type TableEntry = Vec<LiteralValue>;
+pub type TableRow = Vec<LiteralValue>;
 pub type TableHeader = Vec<ColumnDef>;
 
 pub struct Table {
     pub name: String,
     pub header: TableHeader,
-    pub data: BTreeMap<uint, TableEntry>,
+    pub data: BTreeMap<uint, TableRow>,
     pub pk: Option<uint>,
 }
 
@@ -29,23 +29,23 @@ impl Table {
         self.header.iter().position(|ref cols| cols.name == name)
     }
 
-    pub fn has_entry(&self, pk: uint) -> bool {
+    pub fn has_row(&self, pk: uint) -> bool {
         self.data.contains_key(&pk)
     }
 
     pub fn assert_size(&self) {
         let header_size = self.header.len();
 
-        for entry in self.data.values() {
-            assert!(entry.len() == header_size);
+        for row in self.data.values() {
+            assert!(row.len() == header_size);
         }
     }
 
     pub fn add_column(&mut self, column_def: &ColumnDef) {
         self.header.push(column_def.clone());
 
-        for (_, entry) in self.data.iter_mut() {
-            entry.push(LiteralValue::Null);
+        for (_, row) in self.data.iter_mut() {
+            row.push(LiteralValue::Null);
         }
     }
 
@@ -60,34 +60,34 @@ impl Table {
         for column_data in column_data.iter() {
             if let &Some(ref column_names) = specified_columns {
                 assert!(column_names.len() == column_data.len());
-                let mut entry = Vec::from_elem(self.header.len(), LiteralValue::Null);
+                let mut row = Vec::from_elem(self.header.len(), LiteralValue::Null);
 
                 for (name, data) in column_names.iter().zip(column_data.iter()) {
-                    entry[self.get_column_index(name.clone()).unwrap()] = data.clone();
+                    row[self.get_column_index(name.clone()).unwrap()] = data.clone();
                 }
 
-                self.push_entry(entry);
+                self.push_row(row);
             } else {
-                self.push_entry(column_data.clone());
+                self.push_row(column_data.clone());
             }
         }
     }
 
-    pub fn push_entry(&mut self, entry: TableEntry) {
+    pub fn push_row(&mut self, row: TableRow) {
         if let Some(i) = self.pk {
-            let pk = entry[i].clone().to_uint();
-            self.data.insert(pk, entry);
+            let pk = row[i].clone().to_uint();
+            self.data.insert(pk, row);
         } else {
             let len = self.data.len();
-            self.data.insert(len, entry);
+            self.data.insert(len, row);
         }
     }
 
-    pub fn delete_where(&mut self, f: |entry: &TableEntry| -> bool) {
+    pub fn delete_where(&mut self, f: |row: &TableRow| -> bool) {
         let mut keys: Vec<uint> = Vec::new();
 
-        for (key, entry) in self.data.iter() {
-            if !f(entry) {
+        for (key, row) in self.data.iter() {
+            if !f(row) {
                 continue;
             }
             keys.push(key.clone());
@@ -113,7 +113,7 @@ impl Table {
     }
 }
 
-pub fn get_column(name: &String, entry: &TableEntry, head: &TableHeader, offset: Option<uint>) -> LiteralValue {
+pub fn get_column(name: &String, row: &TableRow, head: &TableHeader, offset: Option<uint>) -> LiteralValue {
     let x = if let Some(x) = offset { x } else { 0 };
-    entry[head.iter().position(|ref def| def.name == *name).unwrap() + x].clone()
+    row[head.iter().position(|ref def| def.name == *name).unwrap() + x].clone()
 }

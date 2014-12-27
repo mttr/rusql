@@ -45,10 +45,10 @@ fn test_has_entries() {
     let db = init_db_and_insert_into_table();
     let table = db.map.get("Foo".as_slice()).unwrap();
 
-    assert!(table.has_entry(1));
-    assert!(table.has_entry(2));
-    assert!(table.has_entry(3));
-    assert!(table.has_entry(4));
+    assert!(table.has_row(1));
+    assert!(table.has_row(2));
+    assert!(table.has_row(3));
+    assert!(table.has_row(4));
 }
 
 #[test]
@@ -73,8 +73,8 @@ fn test_select_with() {
     let mut db = init_db_and_insert_into_table();
     let mut called_once = false;
 
-    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=2;", |entry, _| {
-        assert!(entry[0] == LiteralValue::Integer(2));
+    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=2;", |row, _| {
+        assert!(row[0] == LiteralValue::Integer(2));
         called_once = true;
     });
 
@@ -101,8 +101,8 @@ fn test_insert_into_with_specified_columns() {
     let comparison = vec![LiteralValue::Integer(3), LiteralValue::Null];
 
     rusql_exec(&mut db, "INSERT INTO Foo(Id) VALUES(3);", |_,_| {});
-    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=3;", |entry, _| {
-        assert!(entry == &comparison);
+    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=3;", |row, _| {
+        assert!(row == &comparison);
         called_once = true;
     });
 
@@ -125,8 +125,8 @@ fn test_insert_into_with_multiple_rows() {
                    INSERT INTO Ints(Id) VALUES (2), (4), (8), (15), (16), (23), (42); \
                    SELECT * FROM Ints;";
 
-    rusql_exec(&mut db, sql_str, |entry, _| {
-        results.push(entry[0].clone());
+    rusql_exec(&mut db, sql_str, |row, _| {
+        results.push(row[0].clone());
     });
 
     assert!(results == expected);
@@ -151,8 +151,8 @@ fn test_delete_with() {
     let sql_str = "DELETE FROM Foo WHERE Id=3; \
                    SELECT * FROM Foo;";
 
-    rusql_exec(&mut db, sql_str, |entry, _| {
-        match entry[0] {
+    rusql_exec(&mut db, sql_str, |row, _| {
+        match row[0] {
             LiteralValue::Integer(id) => results.push(id),
             _ => {}
         }
@@ -181,8 +181,8 @@ fn test_update() {
     let sql_str = "UPDATE Foo SET Name=\"Qux\"; \
                    SELECT * FROM Foo;";
 
-    rusql_exec(&mut db, sql_str, |entry, _| {
-        assert!(entry[1] == LiteralValue::Text("Qux".to_string()));
+    rusql_exec(&mut db, sql_str, |row, _| {
+        assert!(row[1] == LiteralValue::Text("Qux".to_string()));
     });
 }
 
@@ -194,8 +194,8 @@ fn test_update_where() {
     let expected = vec![LiteralValue::Text("Qux".to_string())];
     let mut results: Vec<LiteralValue> = Vec::new();
 
-    rusql_exec(&mut db, sql_str, |entry, _| {
-        results.push(entry[1].clone());
+    rusql_exec(&mut db, sql_str, |row, _| {
+        results.push(row[1].clone());
     });
 
     assert!(results == expected);
@@ -221,12 +221,12 @@ fn test_select_multiple_tables() {
                         vec![3, 2, 1]];
     let mut results: Vec<Vec<int>> = Vec::new();
 
-    rusql_exec(&mut db, sql_str, |entry, _| {
-        let mut row: Vec<int> = Vec::new();
-        for column in entry.iter() {
-            row.push(column.to_uint() as int);
+    rusql_exec(&mut db, sql_str, |row, _| {
+        let mut result_row: Vec<int> = Vec::new();
+        for column in row.iter() {
+            result_row.push(column.to_uint() as int);
         }
-        results.push(row);
+        results.push(result_row);
     });
 
     assert_eq!(results, expected);
@@ -246,12 +246,12 @@ fn test_select_with_mutltiple_tables() {
                         vec![2, 2]];
     let mut results: Vec<Vec<int>> = Vec::new();
 
-    rusql_exec(&mut db, sql_str, |entry, _| {
-        let mut row: Vec<int> = Vec::new();
-        for column in entry.iter() {
-            row.push(column.to_uint() as int);
+    rusql_exec(&mut db, sql_str, |row, _| {
+        let mut result_row: Vec<int> = Vec::new();
+        for column in row.iter() {
+            result_row.push(column.to_uint() as int);
         }
-        results.push(row);
+        results.push(result_row);
     });
 
     assert_eq!(results, expected);

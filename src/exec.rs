@@ -1,4 +1,4 @@
-use table::{TableEntry, TableHeader, Table, get_column};
+use table::{TableRow, TableHeader, Table, get_column};
 use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
 use definitions::{AlterTableDef, AlterTable, Expression, BinaryOperator};
 use definitions::{LiteralValue, DeleteDef, InsertDataSource, UpdateDef};
@@ -6,7 +6,7 @@ use rusql::Rusql;
 
 peg_file! parser("sql.rustpeg");
 
-pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableEntry, &TableHeader|) {
+pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableRow, &TableHeader|) {
     match parser::rusql_parse(sql_str) {
         Ok(res) => {
             for stmt in res.iter() {
@@ -39,7 +39,7 @@ fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
     if let Some(ref expr) = delete_def.where_expr {
         // FIXME just making the borrow checker happy...
         let header = table.header.clone();
-        table.delete_where(|entry| ExpressionEvaluator::new(entry, &header, None).eval_bool(expr));
+        table.delete_where(|row| ExpressionEvaluator::new(row, &header, None).eval_bool(expr));
     } else {
         table.clear();
     }
@@ -52,18 +52,18 @@ fn insert(db: &mut Rusql, insert_def: &InsertDef) {
             table.insert(column_data, &insert_def.column_names);
         }
         InsertDataSource::Select(ref select_def) => {
-            let mut new_entries: Vec<TableEntry> = Vec::new();
+            let mut new_entries: Vec<TableRow> = Vec::new();
 
             // FIXME make sure we're putting in valid entries for this table...
-            // FIXME Each entry gets cloned twice...
+            // FIXME Each row gets cloned twice...
 
-            select(db, select_def, |entry, _| {
-                new_entries.push(entry.clone());
+            select(db, select_def, |row, _| {
+                new_entries.push(row.clone());
             });
             let mut table = db.get_mut_table(&insert_def.table_name);
 
-            for entry in new_entries.into_iter() {
-                table.push_entry(entry);
+            for row in new_entries.into_iter() {
+                table.push_row(row);
             }
         }
         _ => {}
@@ -73,9 +73,9 @@ fn insert(db: &mut Rusql, insert_def: &InsertDef) {
 fn update(db: &mut Rusql, update_def: &UpdateDef) {
     let mut table = db.get_mut_table(&update_def.name);
 
-    for (_, entry) in table.data.iter_mut() {
+    for (_, row) in table.data.iter_mut() {
         if let Some(ref expr) = update_def.where_expr {
-            if !ExpressionEvaluator::new(entry, &table.header, None).eval_bool(expr) {
+            if !ExpressionEvaluator::new(row, &table.header, None).eval_bool(expr) {
                 continue;
             }
         }
@@ -83,7 +83,7 @@ fn update(db: &mut Rusql, update_def: &UpdateDef) {
         for &(ref name, ref expr) in update_def.set.iter() {
             let x = table.header.iter().position(|ref cols| &cols.name == name).unwrap();
 
-            entry[x] = expr_to_literal(expr);
+            row[x] = expr_to_literal(expr);
         }
     }
 }
@@ -97,15 +97,15 @@ enum ExpressionResult {
 
 struct ExpressionEvaluator<'a, 'b> {
     // FIXME wtf am I doing?!?!?!
-    entry: &'a TableEntry,
+    row: &'a TableRow,
     head: &'a TableHeader,
     tables: Option<Vec<&'b Table>>,
 }
 
 impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
-    pub fn new(entry: &'a TableEntry, head: &'a TableHeader, tables: Option<Vec<&'b Table>>) -> ExpressionEvaluator<'a, 'b> {
+    pub fn new(row: &'a TableRow, head: &'a TableHeader, tables: Option<Vec<&'b Table>>) -> ExpressionEvaluator<'a, 'b> {
         ExpressionEvaluator {
-            entry: entry,
+            row: row,
             head: head,
             tables: tables,
         }
@@ -115,7 +115,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         match expr {
             &Expression::LiteralValue(ref value) => ExpressionResult::Value(value.clone()),
             &Expression::TableName(_) => self.eval_column_name(expr, None, None),
-            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.entry, self.head, None)),
+            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.row, self.head, None)),
             &Expression::BinaryOperator((b, ref exp1, ref exp2)) => self.eval_binary_operator(b, &**exp1,
                                                                                               &**exp2),
         }
@@ -158,7 +158,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
 
                 self.eval_column_name(&**expr, table, Some(offset))
             }
-            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.entry, self.head, offset)),
+            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.row, self.head, offset)),
             _ => ExpressionResult::Boolean(false),
         }
     }
@@ -171,28 +171,28 @@ fn expr_to_literal(expr: &Expression) -> LiteralValue {
     }
 }
 
-fn product(tables: Vec<&Table>, result_table: &mut Table, new_entry_opt: Option<TableEntry>) {
+fn product(tables: Vec<&Table>, result_table: &mut Table, new_row_opt: Option<TableRow>) {
     let mut remaining = tables.clone();
     if let Some(table) = remaining.remove(0) {
-        for entry in table.data.values() {
-            let mut new_entry: TableEntry = if let Some(ref new_entry) = new_entry_opt {
-                new_entry.clone()
+        for row in table.data.values() {
+            let mut new_row: TableRow = if let Some(ref new_row) = new_row_opt {
+                new_row.clone()
             } else {
                 Vec::new()
             };
 
-            new_entry.push_all(&*entry.clone());
+            new_row.push_all(&*row.clone());
 
-            product(remaining.clone(), result_table, Some(new_entry));
+            product(remaining.clone(), result_table, Some(new_row));
         }
     } else {
-        if let Some(new_entry) = new_entry_opt {
-            result_table.push_entry(new_entry);
+        if let Some(new_row) = new_row_opt {
+            result_table.push_row(new_row);
         }
     }
 }
 
-fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableEntry, &TableHeader|) {
+fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableRow, &TableHeader|) {
     let mut input_tables: Vec<&Table> = Vec::new();
     let mut result_header: TableHeader = Vec::new();
 
@@ -210,12 +210,12 @@ fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableEntry, &Table
     product(input_tables.clone(), &mut result_table, None);
 
     // FIXME would it be better if we did this as each row is generated?
-    for entry in result_table.data.values() {
+    for row in result_table.data.values() {
         if let Some(ref expr) = select_def.where_expr {
-            if !ExpressionEvaluator::new(entry, &result_table.header, Some(input_tables.clone())).eval_bool(expr) {
+            if !ExpressionEvaluator::new(row, &result_table.header, Some(input_tables.clone())).eval_bool(expr) {
                 continue;
             }
         }
-        callback(entry, &result_table.header);
+        callback(row, &result_table.header);
     }
 }
