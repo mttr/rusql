@@ -13,7 +13,7 @@ pub fn main() {
                                .ok()
                                .expect("Failed to read line");
 
-        rusql_exec(&mut db, input.to_string(), |entry, _| {
+        rusql_exec(&mut db, input.as_slice(), |entry, _| {
             for column in entry.iter() {
                 print!("{} | ", column);
             }

@@ -4,7 +4,7 @@ use rusql::{rusql_exec, Rusql, LiteralValue};
 
 fn init_db_with_table() -> Rusql {
     let mut db = rusql::Rusql::new();
-    let sql_str = "CREATE TABLE Foo(Id INTEGER PRIMARY KEY, Name TEXT);".to_string();
+    let sql_str = "CREATE TABLE Foo(Id INTEGER PRIMARY KEY, Name TEXT);";
     rusql_exec(&mut db, sql_str, |_,_| {});
 
     db
@@ -20,7 +20,7 @@ fn init_db_and_insert_into_table() -> Rusql {
     ];
 
     for sql_str in sql_strs.iter() {
-        rusql_exec(&mut db, sql_str.to_string(), |_,_| {});
+        rusql_exec(&mut db, *sql_str, |_,_| {});
     }
 
     db
@@ -55,7 +55,7 @@ fn test_has_entries() {
 fn test_drop_table() {
     let mut db = init_db_with_table();
     assert!(db.map.contains_key("Foo".as_slice()));
-    rusql_exec(&mut db, "DROP TABLE Foo;".to_string(), |_,_| {});
+    rusql_exec(&mut db, "DROP TABLE Foo;", |_,_| {});
     assert!(!db.map.contains_key("Foo".as_slice()));
 }
 
@@ -63,7 +63,7 @@ fn test_drop_table() {
 fn test_alter_table_rename() {
     let mut db = init_db_with_table();
     assert!(db.map.contains_key("Foo".as_slice()));
-    rusql_exec(&mut db, "ALTER TABLE Foo RENAME TO Bar;".to_string(), |_,_| {});
+    rusql_exec(&mut db, "ALTER TABLE Foo RENAME TO Bar;", |_,_| {});
     assert!(!db.map.contains_key("Foo".as_slice()));
     assert!(db.map.contains_key("Bar".as_slice()));
 }
@@ -73,7 +73,7 @@ fn test_select_with() {
     let mut db = init_db_and_insert_into_table();
     let mut called_once = false;
 
-    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=2;".to_string(), |entry, _| {
+    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=2;", |entry, _| {
         assert!(entry[0] == LiteralValue::Integer(2));
         called_once = true;
     });
@@ -85,8 +85,8 @@ fn test_select_with() {
 fn test_alter_table_add_to() {
     let mut db = init_db_and_insert_into_table();
 
-    rusql_exec(&mut db, "ALTER TABLE Foo ADD COLUMN Hodor TEXT;".to_string(), |_,_| {});
-    rusql_exec(&mut db, "ALTER TABLE Foo ADD Qux TEXT;".to_string(), |_,_| {});
+    rusql_exec(&mut db, "ALTER TABLE Foo ADD COLUMN Hodor TEXT;", |_,_| {});
+    rusql_exec(&mut db, "ALTER TABLE Foo ADD Qux TEXT;", |_,_| {});
 
     let table = db.map.get("Foo".as_slice()).unwrap();
     assert!(table.get_column_def_by_name("Hodor".to_string()).is_some());
@@ -100,8 +100,8 @@ fn test_insert_into_with_specified_columns() {
     let mut called_once = false;
     let comparison = vec![LiteralValue::Integer(3), LiteralValue::Null];
 
-    rusql_exec(&mut db, "INSERT INTO Foo(Id) VALUES(3);".to_string(), |_,_| {});
-    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=3;".to_string(), |entry, _| {
+    rusql_exec(&mut db, "INSERT INTO Foo(Id) VALUES(3);", |_,_| {});
+    rusql_exec(&mut db, "SELECT * FROM Foo WHERE Id=3;", |entry, _| {
         assert!(entry == &comparison);
         called_once = true;
     });
@@ -125,7 +125,7 @@ fn test_insert_into_with_multiple_rows() {
                    INSERT INTO Ints(Id) VALUES (2), (4), (8), (15), (16), (23), (42); \
                    SELECT * FROM Ints;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+    rusql_exec(&mut db, sql_str, |entry, _| {
         results.push(entry[0].clone());
     });
 
@@ -136,7 +136,7 @@ fn test_insert_into_with_multiple_rows() {
 fn test_delete_all() {
     let mut db = init_db_and_insert_into_table();
 
-    rusql_exec(&mut db, "DELETE FROM Foo;".to_string(), |_,_| {});
+    rusql_exec(&mut db, "DELETE FROM Foo;", |_,_| {});
 
     let table = db.get_table(&"Foo".to_string());
     assert!(table.data.len() == 0);
@@ -151,7 +151,7 @@ fn test_delete_with() {
     let sql_str = "DELETE FROM Foo WHERE Id=3; \
                    SELECT * FROM Foo;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+    rusql_exec(&mut db, sql_str, |entry, _| {
         match entry[0] {
             LiteralValue::Integer(id) => results.push(id),
             _ => {}
@@ -167,7 +167,7 @@ fn test_insert_with_select() {
     let sql_str = "CREATE TABLE Foo2(Id INTEGER PRIMARY KEY, Name TEXT); \
                    INSERT INTO Foo2 SELECT * FROM Foo;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |_,_| {});
+    rusql_exec(&mut db, sql_str, |_,_| {});
 
     let foo = db.get_table(&"Foo".to_string());
     let foo2 = db.get_table(&"Foo2".to_string());
@@ -181,7 +181,7 @@ fn test_update() {
     let sql_str = "UPDATE Foo SET Name=\"Qux\"; \
                    SELECT * FROM Foo;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+    rusql_exec(&mut db, sql_str, |entry, _| {
         assert!(entry[1] == LiteralValue::Text("Qux".to_string()));
     });
 }
@@ -194,7 +194,7 @@ fn test_update_where() {
     let expected = vec![LiteralValue::Text("Qux".to_string())];
     let mut results: Vec<LiteralValue> = Vec::new();
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+    rusql_exec(&mut db, sql_str, |entry, _| {
         results.push(entry[1].clone());
     });
 
@@ -221,7 +221,7 @@ fn test_select_multiple_tables() {
                         vec![3, 2, 1]];
     let mut results: Vec<Vec<int>> = Vec::new();
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+    rusql_exec(&mut db, sql_str, |entry, _| {
         let mut row: Vec<int> = Vec::new();
         for column in entry.iter() {
             row.push(column.to_uint() as int);
@@ -246,7 +246,7 @@ fn test_select_with_mutltiple_tables() {
                         vec![2, 2]];
     let mut results: Vec<Vec<int>> = Vec::new();
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+    rusql_exec(&mut db, sql_str, |entry, _| {
         let mut row: Vec<int> = Vec::new();
         for column in entry.iter() {
             row.push(column.to_uint() as int);

@@ -13,7 +13,7 @@ fn main() {
                    INSERT INTO Yarp VALUES(2, \"Yarp2\"); \
                    SELECT * FROM Foo, Yarp;";
 
-    rusql_exec(&mut db, sql_str.to_string(), |entry, _| {
+    rusql_exec(&mut db, sql_str, |entry, _| {
         for column in entry.iter() {
             print!("{} | ", column);
         }
