@@ -15,8 +15,15 @@ peg = "0.1.2"
 
 [[bin]]
 name = "rusql"
-path = "src/rusql_cli.rs"
+path = "src/shell.rs"
 
 [[example]]
 name = "example"
 path = "examples/example.rs"
+
+[features]
+shellnav = ["readline"]
+
+[dependencies.readline]
+git = "https://github.com/GBGamer/readline.git"
+optional = true
