@@ -6,7 +6,7 @@ use rusql::Rusql;
 
 peg_file! parser("sql.rustpeg");
 
-pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableRow, &TableHeader|) {
+pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableRow, &TableHeader|) -> Option<Table> {
     match parser::rusql_parse(sql_str) {
         Ok(res) => {
             for stmt in res.iter() {
@@ -16,13 +16,14 @@ pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableRow, &TableHea
                     &RusqlStatement::Delete(ref delete_def) => delete(db, delete_def),
                     &RusqlStatement::DropTable(ref drop_table_def) => db.drop_table(&drop_table_def.name),
                     &RusqlStatement::Insert(ref insert_def) => insert(db, insert_def),
-                    &RusqlStatement::Select(ref select_def) => select(db, select_def, |a, b| callback(a, b)),
+                    &RusqlStatement::Select(ref select_def) => return Some(select(db, select_def, |a, b| callback(a, b))),
                     &RusqlStatement::Update(ref update_def) => update(db, update_def),
                 }
             }
         }
         Err(e) => println!("syntax error: {}", e),
     }
+    None
 }
 
 fn alter_table(db: &mut Rusql, alter_table_def: &AlterTableDef) {
@@ -161,8 +162,24 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 self.eval_column_name(&**expr, table_opt, Some(offset))
             }
             &Expression::ColumnName(ref name) => {
+                // FIXME sweet mother of FIXME
                 if self.get_column_def {
-                    ExpressionResult::ColumnDef(table.unwrap().get_column_def_by_name(name.clone()).unwrap().clone())
+                    if let Some(table) = table {
+                        if let Some(column_def) = table.get_column_def_by_name(name.clone()) {
+                            return ExpressionResult::ColumnDef(column_def.clone());
+                        } else {
+                            return ExpressionResult::Null;
+                        }
+                    } else {
+                        if let Some(ref tables) = self.tables {
+                            for table in tables.iter() {
+                                if let Some(column_def) = table.get_column_def_by_name(name.clone()) {
+                                    return ExpressionResult::ColumnDef(column_def.clone());
+                                }
+                            }
+                        }
+                        ExpressionResult::Null
+                    }
                 } else {
                     ExpressionResult::Value(get_column(name, self.row, self.head, offset))
                 }
@@ -200,7 +217,7 @@ fn product(tables: Vec<&Table>, input_product: &mut Table, new_row_opt: Option<T
     }
 }
 
-fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableRow, &TableHeader|) {
+fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableRow, &TableHeader|) -> Table {
     // https://www.sqlite.org/lang_select.html#fromclause
     let mut input_tables: Vec<&Table> = Vec::new();
     let mut input_header: TableHeader = Vec::new();
@@ -227,7 +244,7 @@ fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableRow, &TableHe
     // https://www.sqlite.org/lang_select.html#resultset
     let mut results_header: TableHeader = Vec::new();
     match select_def.result_column {
-        ResultColumn::Asterisk => {},
+        ResultColumn::Asterisk => results_header = input_product.header.clone(),
         ResultColumn::Expressions(ref exprs) => {
             for expr in exprs.iter() {
                 // FIXME omfg
@@ -262,4 +279,6 @@ fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableRow, &TableHe
     for row in results_table.data.values() {
         callback(row, &input_product.header);
     }
+
+    results_table
 }

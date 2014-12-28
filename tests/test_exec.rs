@@ -287,3 +287,27 @@ fn test_select_multiple_tables_with_specified_result_columns() {
 
     assert_eq!(results, expected);
 }
+
+#[test]
+fn test_select_header_length_specified_table_and_columns() {
+    let mut db = init_db_and_insert_into_table();
+
+    let results = rusql_exec(&mut db, "SELECT Foo.Id, Foo.Name FROM Foo;", |_,_| {}).unwrap();
+    assert_eq!(results.header.len(), 2);
+}
+
+#[test]
+fn test_select_header_length_specified_columns() {
+    let mut db = init_db_and_insert_into_table();
+
+    let results = rusql_exec(&mut db, "SELECT Id, Name FROM Foo;", |_,_| {}).unwrap();
+    assert_eq!(results.header.len(), 2);
+}
+
+#[test]
+fn test_select_header_length_asterisk() {
+    let mut db = init_db_and_insert_into_table();
+
+    let results = rusql_exec(&mut db, "SELECT * FROM Foo;", |_,_| {}).unwrap();
+    assert_eq!(results.header.len(), 2);
+}
