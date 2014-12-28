@@ -16,7 +16,7 @@ pub fn main() {
         match input.as_slice() {
             ".make_foo\n" => {
                 rusql_exec(&mut db, "CREATE TABLE Foo(Id INTEGER, Name TEXT);
-                                     INSERT INTO Foo VALUES 
+                                     INSERT INTO Foo VALUES
                                             (1, \"Foo1\"), (2, \"Foo2\"), (3, \"Foo3\");",
                            |_, _| ());
             }
