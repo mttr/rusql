@@ -15,9 +15,9 @@ impl Rusql {
         };
     }
 
-    pub fn rename_table(&mut self, old_name: &String, new_name: &String) {
+    pub fn rename_table(&mut self, old_name: &String, new_name: String) {
         let table = self.map.remove(old_name.as_slice()).unwrap();
-        self.map.insert(new_name.clone(), table);
+        self.map.insert(new_name, table);
     }
 
     pub fn get_table(&self, name: &String) -> &Table {
@@ -28,15 +28,15 @@ impl Rusql {
         self.map.get_mut(name.as_slice()).unwrap()
     }
 
-    pub fn create_table(&mut self, table_def: &TableDef) {
+    pub fn create_table(&mut self, table_def: TableDef) {
         let mut table = Table {
-            name: table_def.table_name.clone(),
-            header: table_def.columns.clone(),
+            name: table_def.table_name,
+            header: table_def.columns,
             data: BTreeMap::new(),
             pk: None,
         };
         table.process_constraints();
-        self.map.insert(table_def.table_name.clone(), table);
+        self.map.insert(table.name.clone(), table);
     }
 
     pub fn drop_table(&mut self, name: &String) {

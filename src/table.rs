@@ -26,12 +26,12 @@ impl Table {
             pk: None,
         }
     }
-    pub fn get_column_def_by_name(&self, name: String) -> Option<&ColumnDef> {
-        self.header.iter().find(|&cols| cols.name == name)
+    pub fn get_column_def_by_name(&self, name: &String) -> Option<&ColumnDef> {
+        self.header.iter().find(|&cols| &cols.name == name)
     }
 
-    pub fn get_column_index(&self, name: String) -> Option<uint> {
-        self.header.iter().position(|ref cols| cols.name == name)
+    pub fn get_column_index(&self, name: &String) -> Option<uint> {
+        self.header.iter().position(|ref cols| &cols.name == name)
     }
 
     pub fn has_row(&self, pk: PkType) -> bool {
@@ -46,34 +46,34 @@ impl Table {
         }
     }
 
-    pub fn add_column(&mut self, column_def: &ColumnDef) {
-        self.header.push(column_def.clone());
+    pub fn add_column(&mut self, column_def: ColumnDef) {
+        self.header.push(column_def);
 
         for (_, row) in self.data.iter_mut() {
             row.push(LiteralValue::Null);
         }
     }
 
-    pub fn add_columns(&mut self, column_defs: Vec<&ColumnDef>) {
-        for def in column_defs.iter() {
-            self.add_column(*def);
+    pub fn add_columns(&mut self, column_defs: Vec<ColumnDef>) {
+        for def in column_defs.into_iter() {
+            self.add_column(def);
         }
     }
 
-    pub fn insert(&mut self, column_data: &Vec<Vec<LiteralValue>>,
+    pub fn insert(&mut self, column_data: Vec<Vec<LiteralValue>>,
                   specified_columns: &Option<Vec<String>>) {
-        for column_data in column_data.iter() {
+        for column_data in column_data.into_iter() {
             if let &Some(ref column_names) = specified_columns {
                 assert!(column_names.len() == column_data.len());
                 let mut row = Vec::from_elem(self.header.len(), LiteralValue::Null);
 
-                for (name, data) in column_names.iter().zip(column_data.iter()) {
-                    row[self.get_column_index(name.clone()).unwrap()] = data.clone();
+                for (name, data) in column_names.iter().zip(column_data.into_iter()) {
+                    row[self.get_column_index(name).unwrap()] = data;
                 }
 
                 self.push_row(row);
             } else {
-                self.push_row(column_data.clone());
+                self.push_row(column_data);
             }
         }
     }

@@ -36,8 +36,8 @@ fn test_create_table() {
 fn test_col_names() {
     let db = init_db_with_table();
     let table = db.map.get("Foo".as_slice()).unwrap();
-    assert!(table.get_column_def_by_name("Id".to_string()).is_some());
-    assert!(table.get_column_def_by_name("Name".to_string()).is_some());
+    assert!(table.get_column_def_by_name(&"Id".to_string()).is_some());
+    assert!(table.get_column_def_by_name(&"Name".to_string()).is_some());
 }
 
 #[test]
@@ -89,8 +89,8 @@ fn test_alter_table_add_to() {
     rusql_exec(&mut db, "ALTER TABLE Foo ADD Qux TEXT;", |_,_| {});
 
     let table = db.map.get("Foo".as_slice()).unwrap();
-    assert!(table.get_column_def_by_name("Hodor".to_string()).is_some());
-    assert!(table.get_column_def_by_name("Qux".to_string()).is_some());
+    assert!(table.get_column_def_by_name(&"Hodor".to_string()).is_some());
+    assert!(table.get_column_def_by_name(&"Qux".to_string()).is_some());
     table.assert_size();
 }
 

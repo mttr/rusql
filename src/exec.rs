@@ -9,15 +9,15 @@ peg_file! parser("sql.rustpeg");
 pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableRow, &TableHeader|) -> Option<Table> {
     match parser::rusql_parse(sql_str) {
         Ok(res) => {
-            for stmt in res.iter() {
+            for stmt in res.into_iter() {
                 match stmt {
-                    &RusqlStatement::AlterTable(ref alter_table_def) => alter_table(db, alter_table_def),
-                    &RusqlStatement::CreateTable(ref table_def) => db.create_table(table_def),
-                    &RusqlStatement::Delete(ref delete_def) => delete(db, delete_def),
-                    &RusqlStatement::DropTable(ref drop_table_def) => db.drop_table(&drop_table_def.name),
-                    &RusqlStatement::Insert(ref insert_def) => insert(db, insert_def),
-                    &RusqlStatement::Select(ref select_def) => return Some(select(db, select_def, |a, b| callback(a, b))),
-                    &RusqlStatement::Update(ref update_def) => update(db, update_def),
+                    RusqlStatement::AlterTable(alter_table_def) => alter_table(db, alter_table_def),
+                    RusqlStatement::CreateTable(table_def) => db.create_table(table_def),
+                    RusqlStatement::Delete(delete_def) => delete(db, delete_def),
+                    RusqlStatement::DropTable(drop_table_def) => db.drop_table(&drop_table_def.name),
+                    RusqlStatement::Insert(insert_def) => insert(db, insert_def),
+                    RusqlStatement::Select(select_def) => return Some(select(db, select_def, |a, b| callback(a, b))),
+                    RusqlStatement::Update(update_def) => update(db, update_def),
                 }
             }
         }
@@ -26,15 +26,15 @@ pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableRow, &TableHea
     None
 }
 
-fn alter_table(db: &mut Rusql, alter_table_def: &AlterTableDef) {
+fn alter_table(db: &mut Rusql, alter_table_def: AlterTableDef) {
     match alter_table_def.mode {
-        AlterTable::RenameTo(ref new_name) => db.rename_table(&alter_table_def.name, new_name),
-        AlterTable::AddColumn(ref column_def) => db.get_mut_table(&alter_table_def.name)
-                                                   .add_column(column_def),
+        AlterTable::RenameTo(new_name) => db.rename_table(&alter_table_def.name, new_name),
+        AlterTable::AddColumn(column_def) => db.get_mut_table(&alter_table_def.name)
+                                               .add_column(column_def),
     }
 }
 
-fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
+fn delete(db: &mut Rusql, delete_def: DeleteDef) {
     let table = db.get_mut_table(&delete_def.name);
 
     if let Some(ref expr) = delete_def.where_expr {
@@ -46,24 +46,17 @@ fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
     }
 }
 
-fn insert(db: &mut Rusql, insert_def: &InsertDef) {
+fn insert(db: &mut Rusql, insert_def: InsertDef) {
     match insert_def.data_source {
-        InsertDataSource::Values(ref column_data) => {
+        InsertDataSource::Values(column_data) => {
             let mut table = db.get_mut_table(&insert_def.table_name);
             table.insert(column_data, &insert_def.column_names);
         }
-        InsertDataSource::Select(ref select_def) => {
-            let mut new_entries: Vec<TableRow> = Vec::new();
-
-            // FIXME make sure we're putting in valid entries for this table...
-            // FIXME Each row gets cloned twice...
-
-            select(db, select_def, |row, _| {
-                new_entries.push(row.clone());
-            });
+        InsertDataSource::Select(select_def) => {
+            let results_table = select(db, select_def, |_,_| {});
             let mut table = db.get_mut_table(&insert_def.table_name);
 
-            for row in new_entries.into_iter() {
+            for (_, row) in results_table.data.into_iter() {
                 table.push_row(row);
             }
         }
@@ -71,7 +64,7 @@ fn insert(db: &mut Rusql, insert_def: &InsertDef) {
     }
 }
 
-fn update(db: &mut Rusql, update_def: &UpdateDef) {
+fn update(db: &mut Rusql, update_def: UpdateDef) {
     let mut table = db.get_mut_table(&update_def.name);
 
     for (_, row) in table.data.iter_mut() {
@@ -170,7 +163,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         if self.get_column_def {
             if let Some(table) = table {
                 // We know which table to grab the def from...
-                if let Some(column_def) = table.get_column_def_by_name(name.clone()) {
+                if let Some(column_def) = table.get_column_def_by_name(name) {
                     return ExpressionResult::ColumnDef(column_def.clone());
                 }
             } else {
@@ -178,7 +171,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 // further down?
                 if let Some(ref tables) = self.tables {
                     for table in tables.iter() {
-                        if let Some(column_def) = table.get_column_def_by_name(name.clone()) {
+                        if let Some(column_def) = table.get_column_def_by_name(name) {
                             return ExpressionResult::ColumnDef(column_def.clone());
                         }
                     }
@@ -219,13 +212,13 @@ fn product(tables: Vec<&Table>, input_product: &mut Table, new_row_opt: Option<T
     }
 }
 
-fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableRow, &TableHeader|) -> Table {
+fn select(db: &mut Rusql, select_def: SelectDef, callback: |&TableRow, &TableHeader|) -> Table {
     let mut input_tables: Vec<&Table> = Vec::new();
-    let mut input_product = generate_inputs(db, &mut input_tables, select_def);
+    let mut input_product = generate_inputs(db, &mut input_tables, &select_def);
 
-    filter_inputs(&mut input_product, &input_tables, select_def);
+    filter_inputs(&mut input_product, &input_tables, &select_def);
 
-    let results_table = generate_result_set(input_product, &input_tables, select_def);
+    let results_table = generate_result_set(input_product, &input_tables, &select_def);
 
     for row in results_table.data.values() {
         callback(row, &results_table.header);
