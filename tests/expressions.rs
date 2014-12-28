@@ -32,3 +32,13 @@ fn test_equality_double_equals() {
 fn test_equality_with_spaces() {
     test("SELECT 26 = 26;", vec![LiteralValue::Boolean(true)]);
 }
+
+#[test]
+fn test_addition() {
+    test("SELECT 5 + 6;", vec![LiteralValue::Integer(11)]);
+}
+
+#[test]
+fn test_subtraction() {
+    test("SELECT 5 - 6;", vec![LiteralValue::Integer(-1)]);
+}

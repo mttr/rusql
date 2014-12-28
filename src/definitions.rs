@@ -37,6 +37,12 @@ impl LiteralValue {
             _ => 0, // FIXME ???
         }
     }
+    pub fn to_int(&self) -> int {
+        match self {
+            &LiteralValue::Integer(i) => i,
+            _ => 0, // FIXME ???
+        }
+    }
 }
 
 impl fmt::Show for LiteralValue {
@@ -111,6 +117,8 @@ pub enum Expression {
 #[deriving(Copy)]
 pub enum BinaryOperator {
     Equals,
+    Plus,
+    Minus,
 }
 
 pub struct DeleteDef {

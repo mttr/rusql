@@ -65,6 +65,16 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
             BinaryOperator::Equals => {
                 ExpressionResult::Value(LiteralValue::Boolean(self.eval_expr(exp1) == self.eval_expr(exp2)))
             }
+            BinaryOperator::Plus => {
+                let left = expr_to_literal(exp1);
+                let right = expr_to_literal(exp2);
+                ExpressionResult::Value(LiteralValue::Integer(left.to_int() + right.to_int()))
+            }
+            BinaryOperator::Minus => {
+                let left = expr_to_literal(exp1);
+                let right = expr_to_literal(exp2);
+                ExpressionResult::Value(LiteralValue::Integer(left.to_int() - right.to_int()))
+            }
         }
     }
 

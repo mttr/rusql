@@ -186,6 +186,8 @@ comma = ","
 asterisk = "*"
 equals = "="
 equals2 = "=="
+plus = "+"
+minus = "-"
 dot = "."
 
 string_literal -> String
@@ -242,3 +244,5 @@ literal_value -> LiteralValue
 
 binary_operator -> BinaryOperator
         = (equals2 / equals) { BinaryOperator::Equals }
+        / plus { BinaryOperator::Plus }
+        / minus { BinaryOperator::Minus }
