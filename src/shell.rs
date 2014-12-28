@@ -1,15 +1,15 @@
 extern crate rusql;
-#[cfg(feature = "shellnav")]
+#[cfg(not(feature = "no_readline"))]
 extern crate readline;
 
-#[cfg(feature = "shellnav")]
+#[cfg(not(feature = "no_readline"))]
 use readline::readline;
 use rusql::{rusql_exec, Rusql};
 
-#[cfg(not(feature = "shellnav"))]
+#[cfg(feature = "no_readline")]
 use std::io;
 
-#[cfg(not(feature = "shellnav"))]
+#[cfg(feature = "no_readline")]
 fn readline(prompt: &str) -> Option<String> {
     print!("{}", prompt);
 

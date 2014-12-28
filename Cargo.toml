@@ -22,7 +22,8 @@ name = "example"
 path = "examples/example.rs"
 
 [features]
-shellnav = ["readline"]
+default = ["readline"]
+no_readline = []
 
 [dependencies.readline]
 git = "https://github.com/GBGamer/readline.git"
