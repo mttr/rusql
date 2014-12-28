@@ -3,7 +3,6 @@ use table::{Table, TableRow, TableHeader, get_column};
 
 #[deriving(PartialEq)]
 pub enum ExpressionResult {
-    Boolean(bool),
     Value(LiteralValue),
     ColumnDef(ColumnDef),
     Null,
@@ -48,7 +47,12 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
 
     pub fn eval_bool(&'a self, expr: &Expression) -> bool {
         match self.eval_expr(expr) {
-            ExpressionResult::Boolean(b) => b,
+            ExpressionResult::Value(value) => {
+                match value {
+                    LiteralValue::Boolean(b) => b,
+                    _ => false,
+                }
+            }
             _ => false,
         }
     }
@@ -59,7 +63,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                             exp2: &Expression) -> ExpressionResult {
         match operator {
             BinaryOperator::Equals => {
-                ExpressionResult::Boolean(self.eval_expr(exp1) == self.eval_expr(exp2))
+                ExpressionResult::Value(LiteralValue::Boolean(self.eval_expr(exp1) == self.eval_expr(exp2)))
             }
         }
     }

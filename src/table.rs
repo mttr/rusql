@@ -138,7 +138,9 @@ impl<'a> fmt::Show for HeaderFormat<'a> {
 
 impl fmt::Show for Table {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "{}", HeaderFormat(&self.header)).ok();
+        if self.header.len() > 0 {
+            writeln!(f, "{}", HeaderFormat(&self.header)).ok();
+        }
         for row in self.data.values() {
             writeln!(f, "{}", RowFormat(row)).ok();
         }

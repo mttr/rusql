@@ -123,17 +123,26 @@ fn generate_inputs<'a>(db: &'a Rusql, input_tables: &mut Vec<&'a Table>, select_
     // https://www.sqlite.org/lang_select.html#fromclause
     let mut input_header: TableHeader = Vec::new();
 
-    for name in select_def.table_or_subquery.iter() {
-        let table = db.get_table(name);
-        input_tables.push(table);
-        input_header.push_all(&*table.header.clone());
+    if let Some(ref table_or_subquery) = select_def.table_or_subquery {
+
+        for name in table_or_subquery.iter() {
+            let table = db.get_table(name);
+            input_tables.push(table);
+            input_header.push_all(&*table.header.clone());
+        }
+
+        let mut input_product = Table::new_result_table(input_header);
+
+        product(input_tables.clone(), &mut input_product, None);
+
+        input_product
+    } else {
+       let mut input_product = Table::new_result_table(input_header);
+       let empty_row: TableRow = Vec::new();
+       input_product.push_row(empty_row);
+
+       input_product
     }
-
-    let mut input_product = Table::new_result_table(input_header);
-
-    product(input_tables.clone(), &mut input_product, None);
-
-    input_product
 }
 
 fn filter_inputs(input_product: &mut Table, input_tables: &Vec<&Table>, select_def: &SelectDef) {

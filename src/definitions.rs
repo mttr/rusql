@@ -26,6 +26,7 @@ pub enum LiteralValue {
     Integer(int),
     Text(String),
     Real(f64),
+    Boolean(bool),
     Null,
 }
 
@@ -44,6 +45,7 @@ impl fmt::Show for LiteralValue {
             &LiteralValue::Integer(ref i) => write!(f, "{}", i),
             &LiteralValue::Text(ref t) => write!(f, "{}", t),
             &LiteralValue::Real(ref r) => write!(f, "{}", r),
+            &LiteralValue::Boolean(ref b) => write!(f, "{}", b),
             &LiteralValue::Null => write!(f, "null"),
         }
     }
@@ -81,7 +83,7 @@ pub struct ColumnDef {
 
 pub struct SelectDef {
     pub result_column: ResultColumn,
-    pub table_or_subquery: Vec<String>,
+    pub table_or_subquery: Option<Vec<String>>,
     pub where_expr: Option<Expression>,
 }
 

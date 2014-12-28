@@ -121,7 +121,7 @@ insert_values -> Vec<LiteralValue>
 // https://www.sqlite.org/lang_select.html
 
 select_stmt -> RusqlStatement
-        = SELECT r:result_column FROM t:(table_or_subquery ++ comma) w:where_expr? {
+        = SELECT r:result_column t:(FROM t:(table_or_subquery ++ comma) { t })? w:where_expr? {
             let def = SelectDef {
                 result_column: r,
                 table_or_subquery: t,
