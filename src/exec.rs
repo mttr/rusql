@@ -41,7 +41,7 @@ fn delete(db: &mut Rusql, delete_def: DeleteDef) {
     if let Some(ref expr) = delete_def.where_expr {
         // FIXME just making the borrow checker happy...
         let header = table.header.clone();
-        table.delete_where(|row| ExpressionEvaluator::new(row, &header, None, false).eval_bool(expr));
+        table.delete_where(|row| ExpressionEvaluator::new(row, &header).eval_bool(expr));
     } else {
         table.clear();
     }
@@ -70,7 +70,7 @@ fn update(db: &mut Rusql, update_def: UpdateDef) {
 
     for (_, row) in table.data.iter_mut() {
         if let Some(ref expr) = update_def.where_expr {
-            if !ExpressionEvaluator::new(row, &table.header, None, false).eval_bool(expr) {
+            if !ExpressionEvaluator::new(row, &table.header).eval_bool(expr) {
                 continue;
             }
         }
@@ -142,7 +142,8 @@ fn filter_inputs(input_product: &mut Table, input_tables: &Vec<&Table>, select_d
     if let Some(ref expr) = select_def.where_expr {
         let header = input_product.header.clone();
         input_product.delete_where(|row| {
-            !ExpressionEvaluator::new(row, &header, Some(input_tables.clone()), false).eval_bool(expr)
+            !ExpressionEvaluator::new(row, &header).with_tables(input_tables.clone())
+                                                   .eval_bool(expr)
         });
     }
 }
@@ -173,12 +174,15 @@ fn generate_row_from_expressions(results_table: &mut Table, row: &TableRow, expr
 
     for expr in exprs.iter() {
         if push_header {
-            match ExpressionEvaluator::new(row, &results_table.header, Some(input_tables.clone()), true).eval_expr(expr) {
+            match ExpressionEvaluator::new(row, &results_table.header).with_tables(input_tables.clone())
+                                                                      .with_column_def()
+                                                                      .eval_expr(expr) {
                 ExpressionResult::ColumnDef(def) => results_table.header.push(def.clone()),
                 _ => {}, // FIXME No idea
             }
         }
-        match ExpressionEvaluator::new(row, &results_table.header, Some(input_tables.clone()), false).eval_expr(expr) {
+        match ExpressionEvaluator::new(row, &results_table.header).with_tables(input_tables.clone())
+                                                                  .eval_expr(expr) {
             ExpressionResult::Value(v) => new_row.push(v),
             _ => {}, // FIXME No idea
         }

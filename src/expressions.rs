@@ -18,13 +18,23 @@ pub struct ExpressionEvaluator<'a, 'b> {
 }
 
 impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
-    pub fn new(row: &'a TableRow, head: &'a TableHeader, tables: Option<Vec<&'b Table>>, get_column_def: bool) -> ExpressionEvaluator<'a, 'b> {
+    pub fn new(row: &'a TableRow, head: &'a TableHeader) -> ExpressionEvaluator<'a, 'b> {
         ExpressionEvaluator {
             row: row,
             head: head,
-            tables: tables,
-            get_column_def: get_column_def,
+            tables: None,
+            get_column_def: false,
         }
+    }
+
+    pub fn with_column_def(&'a mut self) -> &mut ExpressionEvaluator<'a, 'b> {
+        self.get_column_def = true;
+        self
+    }
+
+    pub fn with_tables(&'a mut self, tables: Vec<&'b Table>) -> &mut ExpressionEvaluator<'a, 'b> {
+        self.tables = Some(tables);
+        self
     }
 
     pub fn eval_expr(&'a self, expr: &Expression) -> ExpressionResult {
