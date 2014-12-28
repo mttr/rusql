@@ -27,3 +27,8 @@ fn test_equality() {
 fn test_equality_double_equals() {
     test("SELECT 26==26;", vec![LiteralValue::Boolean(true)]);
 }
+
+#[test]
+fn test_equality_with_spaces() {
+    test("SELECT 26 = 26;", vec![LiteralValue::Boolean(true)]);
+}
