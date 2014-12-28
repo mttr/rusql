@@ -10,13 +10,13 @@ pub enum RusqlStatement {
     Update(UpdateDef),
 }
 
-#[deriving(Copy, Clone)]
+#[deriving(Copy, Clone, PartialEq, Eq)]
 pub enum ColumnType {
     Integer,
     Text,
 }
 
-#[deriving(Copy, Clone)]
+#[deriving(Copy, Clone, PartialEq, Eq)]
 pub enum ColumnConstraint {
     PrimaryKey,
 }
@@ -54,8 +54,8 @@ pub struct TableDef {
     pub columns: Vec<ColumnDef>,
 }
 
-#[deriving(Copy)]
 pub enum ResultColumn {
+    Expressions(Vec<Expression>),
     Asterisk,
 }
 
@@ -72,7 +72,7 @@ pub enum InsertDataSource {
     Error,
 }
 
-#[deriving(Clone)]
+#[deriving(Clone, PartialEq)]
 pub struct ColumnDef {
     pub name: String,
     pub column_type: Option<ColumnType>,

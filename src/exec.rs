@@ -1,7 +1,7 @@
 use table::{TableRow, TableHeader, Table, get_column};
 use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
 use definitions::{AlterTableDef, AlterTable, Expression, BinaryOperator};
-use definitions::{LiteralValue, DeleteDef, InsertDataSource, UpdateDef};
+use definitions::{LiteralValue, DeleteDef, InsertDataSource, UpdateDef, ColumnDef};
 use rusql::Rusql;
 
 peg_file! parser("sql.rustpeg");
@@ -39,7 +39,7 @@ fn delete(db: &mut Rusql, delete_def: &DeleteDef) {
     if let Some(ref expr) = delete_def.where_expr {
         // FIXME just making the borrow checker happy...
         let header = table.header.clone();
-        table.delete_where(|row| ExpressionEvaluator::new(row, &header, None).eval_bool(expr));
+        table.delete_where(|row| ExpressionEvaluator::new(row, &header, None, false).eval_bool(expr));
     } else {
         table.clear();
     }
@@ -75,7 +75,7 @@ fn update(db: &mut Rusql, update_def: &UpdateDef) {
 
     for (_, row) in table.data.iter_mut() {
         if let Some(ref expr) = update_def.where_expr {
-            if !ExpressionEvaluator::new(row, &table.header, None).eval_bool(expr) {
+            if !ExpressionEvaluator::new(row, &table.header, None, false).eval_bool(expr) {
                 continue;
             }
         }
@@ -92,6 +92,7 @@ fn update(db: &mut Rusql, update_def: &UpdateDef) {
 enum ExpressionResult {
     Boolean(bool),
     Value(LiteralValue),
+    ColumnDef(ColumnDef),
     Null,
 }
 
@@ -100,14 +101,16 @@ struct ExpressionEvaluator<'a, 'b> {
     row: &'a TableRow,
     head: &'a TableHeader,
     tables: Option<Vec<&'b Table>>,
+    get_column_def: bool,
 }
 
 impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
-    pub fn new(row: &'a TableRow, head: &'a TableHeader, tables: Option<Vec<&'b Table>>) -> ExpressionEvaluator<'a, 'b> {
+    pub fn new(row: &'a TableRow, head: &'a TableHeader, tables: Option<Vec<&'b Table>>, get_column_def: bool) -> ExpressionEvaluator<'a, 'b> {
         ExpressionEvaluator {
             row: row,
             head: head,
             tables: tables,
+            get_column_def: get_column_def,
         }
     }
 
@@ -155,9 +158,15 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                     return ExpressionResult::Null;
                 }
 
-                self.eval_column_name(&**expr, table, Some(offset))
+                self.eval_column_name(&**expr, table_opt, Some(offset))
             }
-            &Expression::ColumnName(ref name) => ExpressionResult::Value(get_column(name, self.row, self.head, offset)),
+            &Expression::ColumnName(ref name) => {
+                if self.get_column_def {
+                    ExpressionResult::ColumnDef(table.unwrap().get_column_def_by_name(name.clone()).unwrap().clone())
+                } else {
+                    ExpressionResult::Value(get_column(name, self.row, self.head, offset))
+                }
+            }
             _ => ExpressionResult::Null,
         }
     }
@@ -170,7 +179,7 @@ fn expr_to_literal(expr: &Expression) -> LiteralValue {
     }
 }
 
-fn product(tables: Vec<&Table>, result_table: &mut Table, new_row_opt: Option<TableRow>) {
+fn product(tables: Vec<&Table>, input_product: &mut Table, new_row_opt: Option<TableRow>) {
     let mut remaining = tables.clone();
     if let Some(table) = remaining.remove(0) {
         for row in table.data.values() {
@@ -182,39 +191,75 @@ fn product(tables: Vec<&Table>, result_table: &mut Table, new_row_opt: Option<Ta
 
             new_row.push_all(&*row.clone());
 
-            product(remaining.clone(), result_table, Some(new_row));
+            product(remaining.clone(), input_product, Some(new_row));
         }
     } else {
         if let Some(new_row) = new_row_opt {
-            result_table.push_row(new_row);
+            input_product.push_row(new_row);
         }
     }
 }
 
 fn select(db: &mut Rusql, select_def: &SelectDef, callback: |&TableRow, &TableHeader|) {
+    // https://www.sqlite.org/lang_select.html#fromclause
     let mut input_tables: Vec<&Table> = Vec::new();
-    let mut result_header: TableHeader = Vec::new();
+    let mut input_header: TableHeader = Vec::new();
 
     for name in select_def.table_or_subquery.iter() {
         let table = db.get_table(name);
         input_tables.push(table);
+        input_header.push_all(&*table.header.clone());
+    }
 
+    let mut input_product = Table::new_result_table(input_header);
+
+    product(input_tables.clone(), &mut input_product, None);
+
+    // https://www.sqlite.org/lang_select.html#whereclause
+
+    if let Some(ref expr) = select_def.where_expr {
+        let header = input_product.header.clone();
+        input_product.delete_where(|row| {
+            !ExpressionEvaluator::new(row, &header, Some(input_tables.clone()), false).eval_bool(expr)
+        });
+    }
+
+    // https://www.sqlite.org/lang_select.html#resultset
+    let mut results_header: TableHeader = Vec::new();
+    match select_def.result_column {
+        ResultColumn::Asterisk => {},
+        ResultColumn::Expressions(ref exprs) => {
+            for expr in exprs.iter() {
+                // FIXME omfg
+                let temp: TableRow = Vec::new();
+                match ExpressionEvaluator::new(&temp, &results_header, Some(input_tables.clone()), true).eval_expr(expr) {
+                    ExpressionResult::ColumnDef(def) => results_header.push(def.clone()),
+                    _ => {}, // FIXME No idea
+                }
+            }
+        },
+    }
+
+    let mut results_table = Table::new_result_table(results_header);
+
+    for row in input_product.data.values() {
         match select_def.result_column {
-            ResultColumn::Asterisk => result_header.push_all(&*table.header.clone()),
+            ResultColumn::Expressions(ref exprs) => {
+                let mut new_row: TableRow = Vec::new();
+                for expr in exprs.iter() {
+                    match ExpressionEvaluator::new(row, &results_table.header, Some(input_tables.clone()), false).eval_expr(expr) {
+                        ExpressionResult::Value(v) => new_row.push(v),
+                        _ => {}, // FIXME No idea
+                    }
+                }
+
+                results_table.push_row(new_row);
+            }
+            ResultColumn::Asterisk => results_table.push_row(row.clone()),
         }
     }
 
-    let mut result_table = Table::new_result_table(result_header);
-
-    product(input_tables.clone(), &mut result_table, None);
-
-    // FIXME would it be better if we did this as each row is generated?
-    for row in result_table.data.values() {
-        if let Some(ref expr) = select_def.where_expr {
-            if !ExpressionEvaluator::new(row, &result_table.header, Some(input_tables.clone())).eval_bool(expr) {
-                continue;
-            }
-        }
-        callback(row, &result_table.header);
+    for row in results_table.data.values() {
+        callback(row, &input_product.header);
     }
 }

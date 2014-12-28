@@ -256,3 +256,34 @@ fn test_select_with_mutltiple_tables() {
 
     assert_eq!(results, expected);
 }
+
+#[test]
+fn test_select_multiple_tables_with_specified_result_columns() {
+    let mut db = Rusql::new();
+
+    let sql_str = "CREATE TABLE a(Num INTEGER); \
+                   CREATE TABLE b(Num INTEGER); \
+                   CREATE TABLE c(Num INTEGER); \
+                   INSERT INTO a VALUES(1), (2), (3); \
+                   INSERT INTO b VALUES(1), (2); \
+                   INSERT INTO c VALUES(1); \
+                   SELECT c.Num, a.Num, b.Num FROM a, b, c;";
+
+    let expected = vec![vec![1, 1, 1],
+                        vec![1, 1, 2],
+                        vec![1, 2, 1],
+                        vec![1, 2, 2],
+                        vec![1, 3, 1],
+                        vec![1, 3, 2]];
+    let mut results: Vec<Vec<int>> = Vec::new();
+
+    rusql_exec(&mut db, sql_str, |row, _| {
+        let mut result_row: Vec<int> = Vec::new();
+        for column in row.iter() {
+            result_row.push(column.to_uint() as int);
+        }
+        results.push(result_row);
+    });
+
+    assert_eq!(results, expected);
+}

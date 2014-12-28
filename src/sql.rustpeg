@@ -132,6 +132,7 @@ select_stmt -> RusqlStatement
 
 result_column -> ResultColumn
         = whitespace1 a:asterisk { ResultColumn::Asterisk }
+        / whitespace1 e:(expr ++ comma) { ResultColumn::Expressions(e) }
 
 table_or_subquery -> String
         = table_name
