@@ -10,4 +10,5 @@ pub use table::{TableRow, TableHeader, RowFormat};
 pub mod definitions;
 pub mod table;
 pub mod exec;
+pub mod expressions;
 pub mod rusql;
