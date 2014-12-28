@@ -13,11 +13,18 @@ pub fn main() {
                                .ok()
                                .expect("Failed to read line");
 
-        rusql_exec(&mut db, input.as_slice(), |row, _| {
-            for column in row.iter() {
-                print!("{} | ", column);
+        match input.as_slice() {
+            ".make_foo\n" => {
+                rusql_exec(&mut db, "CREATE TABLE Foo(Id INTEGER, Name TEXT);
+                                     INSERT INTO Foo VALUES 
+                                            (1, \"Foo1\"), (2, \"Foo2\"), (3, \"Foo3\");",
+                           |_, _| ());
             }
-            print!("\n");
-        });
+            _ => {
+                if let Some(results) = rusql_exec(&mut db, input.as_slice(), |_, _| {}) {
+                    print!("{}", results);
+                }
+            }
+        }
     }
 }

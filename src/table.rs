@@ -8,6 +8,7 @@ pub type TableHeader = Vec<ColumnDef>;
 pub type PkType = uint;
 
 pub struct RowFormat<'a>(pub &'a TableRow);
+pub struct HeaderFormat<'a>(pub &'a TableHeader);
 
 pub struct Table {
     pub name: String,
@@ -121,6 +122,25 @@ impl<'a> fmt::Show for RowFormat<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for column in self.0.iter() {
             write!(f, "{} | ", column).ok();
+        }
+        Ok(())
+    }
+}
+
+impl<'a> fmt::Show for HeaderFormat<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for def in self.0.iter() {
+            write!(f, "{} | ", def.name).ok();
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Show for Table {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "{}", HeaderFormat(&self.header)).ok();
+        for row in self.data.values() {
+            writeln!(f, "{}", RowFormat(row)).ok();
         }
         Ok(())
     }
