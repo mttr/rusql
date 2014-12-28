@@ -22,3 +22,8 @@ fn test_equality() {
     test("SELECT 26=26;", vec![LiteralValue::Boolean(true)]);
     test("SELECT 26=27;", vec![LiteralValue::Boolean(false)]);
 }
+
+#[test]
+fn test_equality_double_equals() {
+    test("SELECT 26==26;", vec![LiteralValue::Boolean(true)]);
+}
