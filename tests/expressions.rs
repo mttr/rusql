@@ -87,3 +87,8 @@ fn test_multiplication() {
 fn test_division() {
     test("SELECT 15/3;", vec![LiteralValue::Integer(5)]);
 }
+
+#[test]
+fn test_modulo() {
+    test("SELECT 15%6;", vec![LiteralValue::Integer(3)]);
+}

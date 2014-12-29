@@ -183,6 +183,7 @@ binary_operator -> BinaryOperator
         = whitespace b:(
             asterisk { BinaryOperator::Mult }
             / slash { BinaryOperator::Divide }
+            / percent { BinaryOperator::Modulo }
             / plus { BinaryOperator::Plus }
             / minus { BinaryOperator::Minus }
             / (equals2 / equals) { BinaryOperator::Equals }
@@ -207,6 +208,7 @@ plus = "+"
 minus = "-"
 dot = "."
 slash = "/"
+percent = "%"
 
 string_literal -> String
         = "\"" s:string "\"" { s }
