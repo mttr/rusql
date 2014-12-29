@@ -1,4 +1,4 @@
-use definitions::{Expression, LiteralValue, BinaryOperator, ColumnDef};
+use definitions::{Expression, LiteralValue, BinaryOperator, UnaryOperator, ColumnDef};
 use table::{Table, TableRow, TableHeader, get_column};
 
 #[deriving(PartialEq)]
@@ -42,6 +42,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
             &Expression::TableName(_) | &Expression::ColumnName(_) => self.eval_column_name(expr, None, None),
             &Expression::BinaryOperator((b, ref exp1, ref exp2)) => self.eval_binary_operator(b, &**exp1,
                                                                                               &**exp2),
+            &Expression::UnaryOperator((u, ref exp)) => self.eval_unary_operator(u, &**exp),
         }
     }
 
@@ -66,15 +67,24 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 ExpressionResult::Value(LiteralValue::Boolean(self.eval_expr(exp1) == self.eval_expr(exp2)))
             }
             BinaryOperator::Plus => {
-                let left = expr_to_literal(exp1);
-                let right = expr_to_literal(exp2);
+                debug!("{} + {}", exp1, exp2);
+                let left = result_to_literal(self.eval_expr(exp1));
+                let right = result_to_literal(self.eval_expr(exp2));
                 ExpressionResult::Value(LiteralValue::Integer(left.to_int() + right.to_int()))
             }
             BinaryOperator::Minus => {
-                let left = expr_to_literal(exp1);
-                let right = expr_to_literal(exp2);
-                ExpressionResult::Value(LiteralValue::Integer(left.to_int() - right.to_int()))
+                debug!("{} - {}", exp1, exp2);
+                let left = result_to_literal(self.eval_expr(exp1));
+                let right = result_to_literal(self.eval_expr(&neg(exp2)));
+                ExpressionResult::Value(LiteralValue::Integer(left.to_int() + right.to_int()))
             }
+        }
+    }
+
+    fn eval_unary_operator(&'a self, operator: UnaryOperator, expr: &Expression) -> ExpressionResult {
+        match operator {
+            UnaryOperator::Plus => self.eval_expr(expr),
+            UnaryOperator::Minus => ExpressionResult::Value(LiteralValue::Integer(-expr_to_literal(expr).to_int())),
         }
     }
 
@@ -124,6 +134,27 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
             return ExpressionResult::Value(get_column(name, self.row, self.head, offset));
         }
         ExpressionResult::Null
+    }
+}
+
+fn neg(expr: &Expression) -> Expression {
+    match expr {
+        &Expression::LiteralValue(ref lit) => {
+            match lit {
+                &LiteralValue::Integer(i) => Expression::LiteralValue(LiteralValue::Integer(-i)),
+                _ => expr.clone()
+            }
+        }
+        &Expression::BinaryOperator((b, ref expr1, ref expr2)) => Expression::BinaryOperator((b.neg(), box neg(&**expr1), box neg(&**expr2))),
+        &Expression::UnaryOperator((u, ref expr)) => Expression::UnaryOperator((u.neg(), expr.clone())),
+        _ => expr.clone()
+    }
+}
+
+fn result_to_literal(result: ExpressionResult) -> LiteralValue {
+    match result {
+        ExpressionResult::Value(v) => v,
+        _ => LiteralValue::Null,
     }
 }
 

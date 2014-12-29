@@ -1,5 +1,6 @@
 #![feature(globs, phase)]
 
+#[phase(plugin, link)] extern crate log;
 #[phase(plugin)] extern crate peg_syntax_ext;
 
 pub use exec::rusql_exec;

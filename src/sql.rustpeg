@@ -162,18 +162,32 @@ qualified_table_name -> String
 //
 
 value -> Expression
-    = l:literal_value { Expression::LiteralValue(l) }
-    / t:table_name dot n:column_name { Expression::TableName((t, box Expression::ColumnName(n))) }
-    / n:column_name { Expression::ColumnName(n) }
+    = whitespace e:(
+        l:literal_value { Expression::LiteralValue(l) }
+        / t:table_name dot n:column_name { Expression::TableName((t, box Expression::ColumnName(n))) }
+        / n:column_name { Expression::ColumnName(n) }
+        / u:unary_operator e:expr  { Expression::UnaryOperator((u, box e)) }
+    ) { e }
 
 expr -> Expression
         = whitespace (
-            e1:value whitespace b:binary_operator whitespace e2:expr { Expression::BinaryOperator((b, box e1, box e2)) }
+            e1:value b:binary_operator e2:expr { Expression::BinaryOperator((b, box e1, box e2)) }
             / v:value { v }
         )
 
 where_expr -> Expression
         = WHERE whitespace1 e:expr { e }
+
+binary_operator -> BinaryOperator
+        = whitespace b:(
+            (equals2 / equals) { BinaryOperator::Equals }
+            / plus { BinaryOperator::Plus }
+            / minus { BinaryOperator::Minus }
+        ) { b }
+
+unary_operator -> UnaryOperator
+        = plus { UnaryOperator::Plus }
+        / minus { UnaryOperator::Minus }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -241,8 +255,3 @@ type_name -> ColumnType
 literal_value -> LiteralValue
         = whitespace ([0-9]+ { LiteralValue::Integer(match_str.parse::<int>().unwrap()) })
         / whitespace (s:string_literal { LiteralValue::Text(s) })
-
-binary_operator -> BinaryOperator
-        = (equals2 / equals) { BinaryOperator::Equals }
-        / plus { BinaryOperator::Plus }
-        / minus { BinaryOperator::Minus }

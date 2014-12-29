@@ -42,3 +42,18 @@ fn test_addition() {
 fn test_subtraction() {
     test("SELECT 5 - 6;", vec![LiteralValue::Integer(-1)]);
 }
+
+#[test]
+fn test_multiple_additions() {
+    test("SELECT 5 + 6 + 10 + 3 + 1;", vec![LiteralValue::Integer(25)]);
+}
+
+#[test]
+fn test_multiple_subtractions() {
+    test("SELECT 5 - 6 - 10 - 3 - 1;", vec![LiteralValue::Integer(-15)]);
+}
+
+#[test]
+fn test_multiple_additions_and_subtractions() {
+    test("SELECT 5 + 6 - 10 + 3 - 1;", vec![LiteralValue::Integer(3)]);
+}

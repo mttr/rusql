@@ -107,18 +107,45 @@ pub struct AlterTableDef {
     pub mode: AlterTable,
 }
 
+#[deriving(Show, Clone)]
 pub enum Expression {
     LiteralValue(LiteralValue),
     TableName((String, Box<Expression>)),
     ColumnName(String),
     BinaryOperator((BinaryOperator, Box<Expression>, Box<Expression>)),
+    UnaryOperator((UnaryOperator, Box<Expression>)),
 }
 
-#[deriving(Copy)]
+#[deriving(Copy, Show, Clone)]
 pub enum BinaryOperator {
     Equals,
     Plus,
     Minus,
+}
+
+impl BinaryOperator {
+    pub fn neg(&self) -> BinaryOperator {
+        match *self {
+            BinaryOperator::Plus => BinaryOperator::Minus,
+            BinaryOperator::Minus => BinaryOperator::Plus,
+            _ => *self
+        }
+    }
+}
+
+#[deriving(Copy, Show, Clone)]
+pub enum UnaryOperator {
+    Plus,
+    Minus,
+}
+
+impl UnaryOperator {
+    pub fn neg(&self) -> UnaryOperator {
+        match *self {
+            UnaryOperator::Plus => UnaryOperator::Minus,
+            UnaryOperator::Minus => UnaryOperator::Plus,
+        }
+    }
 }
 
 pub struct DeleteDef {
