@@ -181,9 +181,10 @@ where_expr -> Expression
 
 binary_operator -> BinaryOperator
         = whitespace b:(
-            (equals2 / equals) { BinaryOperator::Equals }
+            asterisk { BinaryOperator::Mult }
             / plus { BinaryOperator::Plus }
             / minus { BinaryOperator::Minus }
+            / (equals2 / equals) { BinaryOperator::Equals }
         ) { b }
 
 unary_operator -> UnaryOperator

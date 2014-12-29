@@ -128,6 +128,7 @@ pub enum BinaryOperator {
     Equals,
     Plus,
     Minus,
+    Mult,
 }
 
 impl BinaryOperator {

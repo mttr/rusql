@@ -87,6 +87,12 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 let right = result_to_literal(self.eval_expr(&self.neg(expr2)));
                 ExpressionResult::Value(LiteralValue::Integer(left.to_int() + right.to_int()))
             }
+            BinaryOperator::Mult => {
+                debug!("{} * {}", expr1, expr2);
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(expr2));
+                ExpressionResult::Value(LiteralValue::Integer(left.to_int() * right.to_int()))
+            }
         }
     }
 

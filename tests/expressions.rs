@@ -77,3 +77,8 @@ fn test_neg_paren() {
 fn test_neg_paren_inner_expr() {
     test("SELECT -(3-44);", vec![LiteralValue::Integer(41)]);
 }
+
+#[test]
+fn test_multiplication() {
+    test("SELECT 2*6;", vec![LiteralValue::Integer(12)]);
+}
