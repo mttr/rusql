@@ -172,6 +172,7 @@ value -> Expression
 expr -> Expression
         = whitespace (
             e1:value b:binary_operator e2:expr { Expression::BinaryOperator((b, box e1, box e2)) }
+            / lparen e:expr rparen { e }
             / v:value { v }
         )
 

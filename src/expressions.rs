@@ -1,11 +1,20 @@
 use definitions::{Expression, LiteralValue, BinaryOperator, UnaryOperator, ColumnDef};
 use table::{Table, TableRow, TableHeader, get_column};
 
-#[deriving(PartialEq)]
+#[deriving(PartialEq, Clone)]
 pub enum ExpressionResult {
     Value(LiteralValue),
     ColumnDef(ColumnDef),
     Null,
+}
+
+impl ExpressionResult {
+    pub fn neg(&self) -> ExpressionResult {
+        match self {
+            &ExpressionResult::Value(ref v) => ExpressionResult::Value(v.neg()),
+            _ => self.clone(),
+        }
+    }
 }
 
 pub struct ExpressionEvaluator<'a, 'b> {
@@ -40,8 +49,8 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         match expr {
             &Expression::LiteralValue(ref value) => ExpressionResult::Value(value.clone()),
             &Expression::TableName(_) | &Expression::ColumnName(_) => self.eval_column_name(expr, None, None),
-            &Expression::BinaryOperator((b, ref exp1, ref exp2)) => self.eval_binary_operator(b, &**exp1,
-                                                                                              &**exp2),
+            &Expression::BinaryOperator((b, ref expr1, ref expr2)) => self.eval_binary_operator(b, &**expr1,
+                                                                                              &**expr2),
             &Expression::UnaryOperator((u, ref exp)) => self.eval_unary_operator(u, &**exp),
         }
     }
@@ -60,31 +69,32 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
 
     fn eval_binary_operator(&'a self,
                             operator: BinaryOperator,
-                            exp1: &Expression,
-                            exp2: &Expression) -> ExpressionResult {
+                            expr1: &Expression,
+                            expr2: &Expression) -> ExpressionResult {
         match operator {
             BinaryOperator::Equals => {
-                ExpressionResult::Value(LiteralValue::Boolean(self.eval_expr(exp1) == self.eval_expr(exp2)))
+                ExpressionResult::Value(LiteralValue::Boolean(self.eval_expr(expr1) == self.eval_expr(expr2)))
             }
             BinaryOperator::Plus => {
-                debug!("{} + {}", exp1, exp2);
-                let left = result_to_literal(self.eval_expr(exp1));
-                let right = result_to_literal(self.eval_expr(exp2));
+                debug!("{} + {}", expr1, expr2);
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(expr2));
                 ExpressionResult::Value(LiteralValue::Integer(left.to_int() + right.to_int()))
             }
             BinaryOperator::Minus => {
-                debug!("{} - {}", exp1, exp2);
-                let left = result_to_literal(self.eval_expr(exp1));
-                let right = result_to_literal(self.eval_expr(&neg(exp2)));
+                debug!("{} - {}", expr1, expr2);
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(&self.neg(expr2)));
                 ExpressionResult::Value(LiteralValue::Integer(left.to_int() + right.to_int()))
             }
         }
     }
 
     fn eval_unary_operator(&'a self, operator: UnaryOperator, expr: &Expression) -> ExpressionResult {
+        debug!("{}", expr);
         match operator {
             UnaryOperator::Plus => self.eval_expr(expr),
-            UnaryOperator::Minus => ExpressionResult::Value(LiteralValue::Integer(-expr_to_literal(expr).to_int())),
+            UnaryOperator::Minus => self.eval_expr(expr).neg(),
         }
     }
 
@@ -135,19 +145,19 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         }
         ExpressionResult::Null
     }
-}
 
-fn neg(expr: &Expression) -> Expression {
-    match expr {
-        &Expression::LiteralValue(ref lit) => {
-            match lit {
-                &LiteralValue::Integer(i) => Expression::LiteralValue(LiteralValue::Integer(-i)),
-                _ => expr.clone()
+    fn neg(&'a self, expr: &Expression) -> Expression {
+        match expr {
+            &Expression::LiteralValue(ref lit) => {
+                match lit {
+                    &LiteralValue::Integer(i) => Expression::LiteralValue(LiteralValue::Integer(-i)),
+                    _ => expr.clone()
+                }
             }
+            &Expression::BinaryOperator((b, ref expr1, ref expr2)) => Expression::BinaryOperator((b.neg(), box self.neg(&**expr1), box self.neg(&**expr2))),
+            &Expression::UnaryOperator((u, ref expr)) => Expression::UnaryOperator((u.neg(), expr.clone())),
+            _ => expr.clone()
         }
-        &Expression::BinaryOperator((b, ref expr1, ref expr2)) => Expression::BinaryOperator((b.neg(), box neg(&**expr1), box neg(&**expr2))),
-        &Expression::UnaryOperator((u, ref expr)) => Expression::UnaryOperator((u.neg(), expr.clone())),
-        _ => expr.clone()
     }
 }
 

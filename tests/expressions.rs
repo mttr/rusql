@@ -57,3 +57,23 @@ fn test_multiple_subtractions() {
 fn test_multiple_additions_and_subtractions() {
     test("SELECT 5 + 6 - 10 + 3 - 1;", vec![LiteralValue::Integer(3)]);
 }
+
+#[test]
+fn test_unary_neg() {
+    test("SELECT -5;", vec![LiteralValue::Integer(-5)]);
+}
+
+#[test]
+fn test_paren_expr() {
+    test("SELECT (5-6);", vec![LiteralValue::Integer(-1)]);
+}
+
+#[test]
+fn test_neg_paren() {
+    test("SELECT -(-6);", vec![LiteralValue::Integer(6)]);
+}
+
+#[test]
+fn test_neg_paren_inner_expr() {
+    test("SELECT -(3-44);", vec![LiteralValue::Integer(41)]);
+}

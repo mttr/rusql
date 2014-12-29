@@ -43,6 +43,13 @@ impl LiteralValue {
             _ => 0, // FIXME ???
         }
     }
+
+    pub fn neg(&self) -> LiteralValue {
+        match self {
+            &LiteralValue::Integer(i) => LiteralValue::Integer(-i),
+            _ => self.clone(),
+        }
+    }
 }
 
 impl fmt::Show for LiteralValue {
