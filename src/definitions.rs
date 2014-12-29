@@ -129,6 +129,7 @@ pub enum BinaryOperator {
     Plus,
     Minus,
     Mult,
+    Divide,
 }
 
 impl BinaryOperator {

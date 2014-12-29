@@ -182,6 +182,7 @@ where_expr -> Expression
 binary_operator -> BinaryOperator
         = whitespace b:(
             asterisk { BinaryOperator::Mult }
+            / slash { BinaryOperator::Divide }
             / plus { BinaryOperator::Plus }
             / minus { BinaryOperator::Minus }
             / (equals2 / equals) { BinaryOperator::Equals }
@@ -205,6 +206,7 @@ equals2 = "=="
 plus = "+"
 minus = "-"
 dot = "."
+slash = "/"
 
 string_literal -> String
         = "\"" s:string "\"" { s }
