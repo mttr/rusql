@@ -40,7 +40,16 @@ impl LiteralValue {
     pub fn to_int(&self) -> int {
         match self {
             &LiteralValue::Integer(i) => i,
+            &LiteralValue::Boolean(b) => if b { 1 } else { 0 },
             _ => 0, // FIXME ???
+        }
+    }
+
+    pub fn to_bool(&self) -> bool {
+        match self {
+            &LiteralValue::Integer(i) => i != 0,
+            &LiteralValue::Boolean(b) => b,
+            _ => false, // FIXME ???
         }
     }
 
@@ -126,11 +135,14 @@ pub enum Expression {
 #[deriving(Copy, Show, Clone)]
 pub enum BinaryOperator {
     Equals,
+    NotEquals,
     Plus,
     Minus,
     Mult,
     Divide,
     Modulo,
+    And,
+    Or,
 }
 
 impl BinaryOperator {
@@ -147,6 +159,7 @@ impl BinaryOperator {
 pub enum UnaryOperator {
     Plus,
     Minus,
+    Not,
 }
 
 impl UnaryOperator {
@@ -154,6 +167,7 @@ impl UnaryOperator {
         match *self {
             UnaryOperator::Plus => UnaryOperator::Minus,
             UnaryOperator::Minus => UnaryOperator::Plus,
+            _ => *self,
         }
     }
 }

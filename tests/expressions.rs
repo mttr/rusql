@@ -11,6 +11,19 @@ fn test(sql_str: &str, expected: Vec<LiteralValue>) {
     assert_eq!(&expected, results);
 }
 
+fn test_expect_ints(sql_str: &str, expected: Vec<int>) {
+    let mut db = Rusql::new();
+    let mut results: Vec<int> = Vec::new();
+    let result_table = rusql_exec(&mut db, sql_str, |_,_| {}).unwrap();
+    let result_row = result_table.data.get(&0).unwrap();
+
+    for column in result_row.iter() {
+        results.push(column.to_int());
+    }
+
+    assert_eq!(expected, results);
+}
+
 #[test]
 fn test_literal_values() {
     test("SELECT 26, \"Foo\";",
@@ -35,60 +48,80 @@ fn test_equality_with_spaces() {
 
 #[test]
 fn test_addition() {
-    test("SELECT 5 + 6;", vec![LiteralValue::Integer(11)]);
+    test_expect_ints("SELECT 5 + 6;", vec![11]);
 }
 
 #[test]
 fn test_subtraction() {
-    test("SELECT 5 - 6;", vec![LiteralValue::Integer(-1)]);
+    test_expect_ints("SELECT 5 - 6;", vec![-1]);
 }
 
 #[test]
 fn test_multiple_additions() {
-    test("SELECT 5 + 6 + 10 + 3 + 1;", vec![LiteralValue::Integer(25)]);
+    test_expect_ints("SELECT 5 + 6 + 10 + 3 + 1;", vec![25]);
 }
 
 #[test]
 fn test_multiple_subtractions() {
-    test("SELECT 5 - 6 - 10 - 3 - 1;", vec![LiteralValue::Integer(-15)]);
+    test_expect_ints("SELECT 5 - 6 - 10 - 3 - 1;", vec![-15]);
 }
 
 #[test]
 fn test_multiple_additions_and_subtractions() {
-    test("SELECT 5 + 6 - 10 + 3 - 1;", vec![LiteralValue::Integer(3)]);
+    test_expect_ints("SELECT 5 + 6 - 10 + 3 - 1;", vec![3]);
 }
 
 #[test]
 fn test_unary_neg() {
-    test("SELECT -5;", vec![LiteralValue::Integer(-5)]);
+    test_expect_ints("SELECT -5;", vec![-5]);
 }
 
 #[test]
 fn test_paren_expr() {
-    test("SELECT (5-6);", vec![LiteralValue::Integer(-1)]);
+    test_expect_ints("SELECT (5-6);", vec![-1]);
 }
 
 #[test]
 fn test_neg_paren() {
-    test("SELECT -(-6);", vec![LiteralValue::Integer(6)]);
+    test_expect_ints("SELECT -(-6);", vec![6]);
 }
 
 #[test]
 fn test_neg_paren_inner_expr() {
-    test("SELECT -(3-44);", vec![LiteralValue::Integer(41)]);
+    test_expect_ints("SELECT -(3-44);", vec![41]);
 }
 
 #[test]
 fn test_multiplication() {
-    test("SELECT 2*6;", vec![LiteralValue::Integer(12)]);
+    test_expect_ints("SELECT 2*6;", vec![12]);
 }
 
 #[test]
 fn test_division() {
-    test("SELECT 15/3;", vec![LiteralValue::Integer(5)]);
+    test_expect_ints("SELECT 15/3;", vec![5]);
 }
 
 #[test]
 fn test_modulo() {
-    test("SELECT 15%6;", vec![LiteralValue::Integer(3)]);
+    test_expect_ints("SELECT 15%6;", vec![3]);
+}
+
+#[test]
+fn test_not_equals() {
+    test_expect_ints("SELECT 5!=4, 5<>4, 5!=5;", vec![1, 1, 0]);
+}
+
+#[test]
+fn test_and() {
+    test_expect_ints("SELECT 0 AND 0, 0 AND 1, 1 AND 0, 1 AND 1;", vec![0, 0, 0, 1]);
+}
+
+#[test]
+fn test_or() {
+    test_expect_ints("SELECT 0 OR 0, 0 OR 1, 1 OR 0, 1 OR 1;", vec![0, 1, 1, 1]);
+}
+
+#[test]
+fn test_not() {
+    test_expect_ints("SELECT NOT 1, NOT 0, NOT (5 == 5);", vec![0, 1, 0]);
 }

@@ -75,6 +75,19 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
             BinaryOperator::Equals => {
                 ExpressionResult::Value(LiteralValue::Boolean(self.eval_expr(expr1) == self.eval_expr(expr2)))
             }
+            BinaryOperator::NotEquals => {
+                ExpressionResult::Value(LiteralValue::Boolean(self.eval_expr(expr1) != self.eval_expr(expr2)))
+            }
+            BinaryOperator::And => {
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(expr2));
+                ExpressionResult::Value(LiteralValue::Boolean(left.to_bool() && right.to_bool()))
+            }
+            BinaryOperator::Or => {
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(expr2));
+                ExpressionResult::Value(LiteralValue::Boolean(left.to_bool() || right.to_bool()))
+            }
             BinaryOperator::Plus => {
                 debug!("{} + {}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
@@ -113,6 +126,10 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         match operator {
             UnaryOperator::Plus => self.eval_expr(expr),
             UnaryOperator::Minus => self.eval_expr(expr).neg(),
+            UnaryOperator::Not => {
+                let lit = result_to_literal(self.eval_expr(expr));
+                ExpressionResult::Value(LiteralValue::Boolean(!lit.to_bool()))
+            }
         }
     }
 

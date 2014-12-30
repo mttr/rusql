@@ -165,8 +165,8 @@ value -> Expression
     = whitespace e:(
         l:literal_value { Expression::LiteralValue(l) }
         / t:table_name dot n:column_name { Expression::TableName((t, box Expression::ColumnName(n))) }
-        / n:column_name { Expression::ColumnName(n) }
-        / u:unary_operator e:expr  { Expression::UnaryOperator((u, box e)) }
+        / !unary_operator n:column_name { Expression::ColumnName(n) }
+        / u:unary_operator e:expr { Expression::UnaryOperator((u, box e)) }
     ) { e }
 
 expr -> Expression
@@ -186,12 +186,16 @@ binary_operator -> BinaryOperator
             / percent { BinaryOperator::Modulo }
             / plus { BinaryOperator::Plus }
             / minus { BinaryOperator::Minus }
-            / (equals2 / equals) { BinaryOperator::Equals }
+            / equals { BinaryOperator::Equals }
+            / not_equals { BinaryOperator::NotEquals }
+            / and { BinaryOperator::And }
+            / or { BinaryOperator::Or }
         ) { b }
 
 unary_operator -> UnaryOperator
         = plus { UnaryOperator::Plus }
         / minus { UnaryOperator::Minus }
+        / not { UnaryOperator::Not }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -202,13 +206,16 @@ lparen = "("
 rparen = ")"
 comma = ","
 asterisk = "*"
-equals = "="
-equals2 = "=="
+equals = "==" / "="
+not_equals = "!=" / "<>"
 plus = "+"
 minus = "-"
 dot = "."
 slash = "/"
 percent = "%"
+and = whitespace "AND"
+not = whitespace "NOT"
+or = whitespace "OR"
 
 string_literal -> String
         = "\"" s:string "\"" { s }
@@ -232,6 +239,7 @@ FROM = whitespace1 "FROM"
 TABLE = whitespace1 "TABLE"
 INTEGER = whitespace1 "INTEGER"
 INTO = whitespace1 "INTO"
+IS = whitespace1 "IS"
 KEY = whitespace1 "KEY"
 PRIMARY = whitespace1 "PRIMARY"
 RENAME = whitespace1 "RENAME"
