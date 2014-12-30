@@ -59,6 +59,41 @@ impl LiteralValue {
             _ => self.clone(),
         }
     }
+
+    fn int_add(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+        match rhs {
+            LiteralValue::Integer(i) => LiteralValue::Integer(x + i),
+            _ => LiteralValue::Null,
+        }
+    }
+
+    fn int_sub(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+        match rhs {
+            LiteralValue::Integer(i) => LiteralValue::Integer(x - i),
+            _ => LiteralValue::Null,
+        }
+    }
+
+    fn int_mul(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+        match rhs {
+            LiteralValue::Integer(i) => LiteralValue::Integer(x * i),
+            _ => LiteralValue::Null,
+        }
+    }
+
+    fn int_div(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+        match rhs {
+            LiteralValue::Integer(i) => LiteralValue::Integer(x / i),
+            _ => LiteralValue::Null,
+        }
+    }
+
+    fn int_rem(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+        match rhs {
+            LiteralValue::Integer(i) => LiteralValue::Integer(x % i),
+            _ => LiteralValue::Null,
+        }
+    }
 }
 
 impl fmt::Show for LiteralValue {
@@ -69,6 +104,51 @@ impl fmt::Show for LiteralValue {
             &LiteralValue::Real(ref r) => write!(f, "{}", r),
             &LiteralValue::Boolean(ref b) => write!(f, "{}", b),
             &LiteralValue::Null => write!(f, "null"),
+        }
+    }
+}
+
+impl Add<LiteralValue, LiteralValue> for LiteralValue {
+    fn add(self, rhs: LiteralValue) -> LiteralValue {
+        match self {
+            LiteralValue::Integer(i) => self.int_add(i, rhs),
+            _ => LiteralValue::Null,
+        }
+    }
+}
+
+impl Sub<LiteralValue, LiteralValue> for LiteralValue {
+    fn sub(self, rhs: LiteralValue) -> LiteralValue {
+        match self {
+            LiteralValue::Integer(i) => self.int_sub(i, rhs),
+            _ => LiteralValue::Null,
+        }
+    }
+}
+
+impl Mul<LiteralValue, LiteralValue> for LiteralValue {
+    fn mul(self, rhs: LiteralValue) -> LiteralValue {
+        match self {
+            LiteralValue::Integer(i) => self.int_mul(i, rhs),
+            _ => LiteralValue::Null,
+        }
+    }
+}
+
+impl Div<LiteralValue, LiteralValue> for LiteralValue {
+    fn div(self, rhs: LiteralValue) -> LiteralValue {
+        match self {
+            LiteralValue::Integer(i) => self.int_div(i, rhs),
+            _ => LiteralValue::Null,
+        }
+    }
+}
+
+impl Rem<LiteralValue, LiteralValue> for LiteralValue {
+    fn rem(self, rhs: LiteralValue) -> LiteralValue {
+        match self {
+            LiteralValue::Integer(i) => self.int_rem(i, rhs),
+            _ => LiteralValue::Null,
         }
     }
 }

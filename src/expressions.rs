@@ -92,31 +92,31 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 debug!("{} + {}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(expr2));
-                ExpressionResult::Value(LiteralValue::Integer(left.to_int() + right.to_int()))
+                ExpressionResult::Value(left + right)
             }
             BinaryOperator::Minus => {
                 debug!("{} - {}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(&self.neg(expr2)));
-                ExpressionResult::Value(LiteralValue::Integer(left.to_int() + right.to_int()))
+                ExpressionResult::Value(left + right)
             }
             BinaryOperator::Mult => {
                 debug!("{} * {}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(expr2));
-                ExpressionResult::Value(LiteralValue::Integer(left.to_int() * right.to_int()))
+                ExpressionResult::Value(left * right)
             }
             BinaryOperator::Divide => {
                 debug!("{} / {}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(expr2));
-                ExpressionResult::Value(LiteralValue::Integer(left.to_int() / right.to_int()))
+                ExpressionResult::Value(left / right)
             }
             BinaryOperator::Modulo => {
                 debug!("{} % {}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(expr2));
-                ExpressionResult::Value(LiteralValue::Integer(left.to_int() % right.to_int()))
+                ExpressionResult::Value(left % right)
             }
         }
     }
