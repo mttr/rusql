@@ -1,6 +1,8 @@
 use definitions::{Expression, LiteralValue, BinaryOperator, UnaryOperator, ColumnDef};
 use table::{Table, TableRow, TableHeader, get_column};
 
+use std::cell::Cell;
+
 #[deriving(PartialEq, Clone)]
 pub enum ExpressionResult {
     Value(LiteralValue),
@@ -23,6 +25,7 @@ pub struct ExpressionEvaluator<'a, 'b> {
     head: &'a TableHeader,
     tables: Option<Vec<&'b Table>>,
     get_column_def: bool,
+    order_pass: Cell<bool>,
 }
 
 impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
@@ -32,6 +35,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
             head: head,
             tables: None,
             get_column_def: false,
+            order_pass: Cell::new(false),
         }
     }
 
@@ -45,13 +49,38 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         self
     }
 
+    pub fn order_of_operations(&'a self, expr: &Expression) -> Expression {
+        let (b1, left1, right1) = expr.unwrap_binary_operator();
+        let (b2, left2, right2) = right1.unwrap_binary_operator();
+
+        if b1 < b2 {
+            let right2 = self.order_of_operations(&right2);
+
+            let new_expr_child = Expression::BinaryOperator((b1, box left2, box left1));
+            let new_expr_parent = Expression::BinaryOperator((b2, box right2, box new_expr_child));
+            return new_expr_parent;
+        } else {
+            return expr.clone();
+        }
+    }
+
     pub fn eval_expr(&'a self, expr: &Expression) -> ExpressionResult {
         match expr {
             &Expression::LiteralValue(ref value) => ExpressionResult::Value(value.clone()),
-            &Expression::TableName(_) | &Expression::ColumnName(_) => self.eval_column_name(expr, None, None),
-            &Expression::BinaryOperator((b, ref expr1, ref expr2)) => self.eval_binary_operator(b, &**expr1,
-                                                                                              &**expr2),
+            &Expression::TableName(..) | &Expression::ColumnName(..) => self.eval_column_name(expr, None, None),
+            &Expression::BinaryOperator((b, ref expr1, ref expr2)) =>  {
+                if !self.order_pass.get() {
+                    debug!("order_of_op before: {}", expr);
+                    let expr = self.order_of_operations(expr);
+                    debug!("order_of_op after: {}", expr);
+                    self.order_pass.set(true);
+                    self.eval_expr(&expr)
+                } else {
+                    self.eval_binary_operator(b, &**expr1, &**expr2)
+                }
+            }
             &Expression::UnaryOperator((u, ref exp)) => self.eval_unary_operator(u, &**exp),
+            _ => ExpressionResult::Null,
         }
     }
 
@@ -118,6 +147,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 let right = result_to_literal(self.eval_expr(expr2));
                 ExpressionResult::Value(left % right)
             }
+            BinaryOperator::Null => ExpressionResult::Null,
         }
     }
 

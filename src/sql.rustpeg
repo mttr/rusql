@@ -164,6 +164,7 @@ qualified_table_name -> String
 value -> Expression
     = whitespace e:(
         l:literal_value { Expression::LiteralValue(l) }
+        / lparen e:expr rparen { e }
         / t:table_name dot n:column_name { Expression::TableName((t, box Expression::ColumnName(n))) }
         / !unary_operator n:column_name { Expression::ColumnName(n) }
         / u:unary_operator e:expr { Expression::UnaryOperator((u, box e)) }
@@ -172,7 +173,6 @@ value -> Expression
 expr -> Expression
         = whitespace (
             e1:value b:binary_operator e2:expr { Expression::BinaryOperator((b, box e1, box e2)) }
-            / lparen e:expr rparen { e }
             / v:value { v }
         )
 

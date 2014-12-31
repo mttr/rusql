@@ -125,3 +125,8 @@ fn test_or() {
 fn test_not() {
     test_expect_ints("SELECT NOT 1, NOT 0, NOT (5 == 5);", vec![0, 1, 0]);
 }
+
+#[test]
+fn test_multiple_boolean_ops() {
+    test_expect_ints("SELECT 3=3 AND 4=4, (3=3) AND (4=4);", vec![1, 1]);
+}

@@ -210,19 +210,38 @@ pub enum Expression {
     ColumnName(String),
     BinaryOperator((BinaryOperator, Box<Expression>, Box<Expression>)),
     UnaryOperator((UnaryOperator, Box<Expression>)),
+    Null,
 }
 
-#[deriving(Copy, Show, Clone)]
+impl Expression {
+    pub fn unwrap_binary_operator(&self) -> (BinaryOperator, Expression, Expression) {
+        match self {
+            &Expression::BinaryOperator((b, ref left, ref right)) => (b, *left.clone(), *right.clone()),
+            _ => (BinaryOperator::Null, Expression::Null, Expression::Null),
+        }
+    }
+}
+
+#[deriving(Copy, Show, Clone, PartialEq, Eq)]
 pub enum BinaryOperator {
-    Equals,
-    NotEquals,
-    Plus,
-    Minus,
+    Null,
     Mult,
     Divide,
     Modulo,
+    Plus,
+    Minus,
+    Equals,
+    NotEquals,
     And,
     Or,
+}
+
+impl PartialOrd for BinaryOperator {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.ord_val() < other.ord_val() { Some(Less) }
+        else if self.ord_val() > other.ord_val() { Some(Greater) }
+        else { Some(Equal) }
+    }
 }
 
 impl BinaryOperator {
@@ -231,6 +250,17 @@ impl BinaryOperator {
             BinaryOperator::Plus => BinaryOperator::Minus,
             BinaryOperator::Minus => BinaryOperator::Plus,
             _ => *self
+        }
+    }
+
+    fn ord_val(&self) -> uint {
+        match *self {
+            BinaryOperator::Null => 0,
+            BinaryOperator::Mult | BinaryOperator::Divide | BinaryOperator::Modulo => 1,
+            BinaryOperator::Plus | BinaryOperator::Minus => 2,
+            BinaryOperator::Equals | BinaryOperator::NotEquals => 3,
+            BinaryOperator::And => 4,
+            BinaryOperator::Or => 5,
         }
     }
 }
