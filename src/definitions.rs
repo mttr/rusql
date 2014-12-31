@@ -314,7 +314,7 @@ impl Expression {
     }
 }
 
-#[deriving(Copy, Show, Clone, PartialEq, Eq)]
+#[deriving(Copy, Show, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BinaryOperator {
     Null,
     Mult,
@@ -336,12 +336,6 @@ pub enum BinaryOperator {
     Or,
 }
 
-impl PartialOrd for BinaryOperator {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.ord_val().cmp(&other.ord_val()))
-    }
-}
-
 impl BinaryOperator {
     pub fn neg(&self) -> BinaryOperator {
         match *self {
@@ -351,7 +345,7 @@ impl BinaryOperator {
         }
     }
 
-    fn ord_val(&self) -> uint {
+    pub fn ord_val(&self) -> uint {
         match *self {
             BinaryOperator::Null => 0,
             BinaryOperator::Mult | BinaryOperator::Divide | BinaryOperator::Modulo => 2,

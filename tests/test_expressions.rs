@@ -175,3 +175,8 @@ fn test_left_shift() {
 fn test_bit_neg() {
     test_expect_ints("SELECT ~7;", vec![-8]);
 }
+
+#[test]
+fn test_mult_div_associativity() {
+    test_expect_ints("SELECT 9/3*3;", vec![9]);
+}

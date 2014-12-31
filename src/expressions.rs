@@ -53,11 +53,26 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         let (b1, left1, right1) = expr.unwrap_binary_operator();
         let (b2, left2, right2) = right1.unwrap_binary_operator();
 
-        if b1 < b2 {
+        if b1.ord_val() < b2.ord_val() {
             let right2 = self.order_of_operations(&right2);
 
             let new_expr_child = Expression::BinaryOperator((b1, box left2, box left1));
             let new_expr_parent = Expression::BinaryOperator((b2, box right2, box new_expr_child));
+
+            return new_expr_parent;
+        } else if b1.ord_val() == b2.ord_val() && b1 > b2{
+            let right2 = self.order_of_operations(&right2);
+
+            let new_expr_child = Expression::BinaryOperator((b1, box left1, box left2));
+            let new_expr_parent = Expression::BinaryOperator((b2, box right2, box new_expr_child));
+
+            return new_expr_parent;
+        } else if b2 != BinaryOperator::Null {
+            let right2 = self.order_of_operations(&right2);
+
+            let new_expr_child = Expression::BinaryOperator((b2, box left2, box right2));
+            let new_expr_parent = Expression::BinaryOperator((b1, box left1, box new_expr_child));
+
             return new_expr_parent;
         } else {
             return expr.clone();
