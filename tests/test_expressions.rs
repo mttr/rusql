@@ -150,3 +150,28 @@ fn test_greater_than() {
 fn test_greater_than_or_eq() {
     test_expect_ints("SELECT 3>=4, 3>=3, 3>=2;", vec![0, 1, 1]);
 }
+
+#[test]
+fn test_bit_and() {
+    test_expect_ints("SELECT 6 & 3;", vec![2]);
+}
+
+#[test]
+fn test_bit_or() {
+    test_expect_ints("SELECT 6 | 3;", vec![7]);
+}
+
+#[test]
+fn test_right_shift() {
+    test_expect_ints("SELECT 6 >> 1;", vec![3]);
+}
+
+#[test]
+fn test_left_shift() {
+    test_expect_ints("SELECT 6 << 1;", vec![12]);
+}
+
+#[test]
+fn test_bit_neg() {
+    test_expect_ints("SELECT ~7;", vec![-8]);
+}

@@ -59,10 +59,6 @@ impl LiteralValue {
             let y = other.to_int();
 
             return x.cmp(&y)
-
-            /*if x < y { return Less }
-            else if x > y { return Greater }
-            else { return Equal }*/
         }
 
         Equal
@@ -207,6 +203,48 @@ impl Rem<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
+impl BitAnd<LiteralValue, LiteralValue> for LiteralValue {
+    fn bitand(self, rhs: LiteralValue) -> LiteralValue {
+        if self.is_int() && rhs.is_int() {
+            LiteralValue::Integer(self.to_int() & rhs.to_int())
+        } else {
+            LiteralValue::Null
+        }
+    }
+}
+
+impl BitOr<LiteralValue, LiteralValue> for LiteralValue {
+    fn bitor(self, rhs: LiteralValue) -> LiteralValue {
+        if self.is_int() && rhs.is_int() {
+            LiteralValue::Integer(self.to_int() | rhs.to_int())
+        } else {
+            LiteralValue::Null
+        }
+    }
+}
+
+impl Shl<LiteralValue, LiteralValue> for LiteralValue {
+    fn shl(self, rhs: LiteralValue) -> LiteralValue {
+        if self.is_int() && rhs.is_int() {
+            LiteralValue::Integer(self.to_int() << rhs.to_int() as uint)
+        } else {
+            LiteralValue::Null
+        }
+    }
+}
+
+impl Shr<LiteralValue, LiteralValue> for LiteralValue {
+    fn shr(self, rhs: LiteralValue) -> LiteralValue {
+        if self.is_int() && rhs.is_int() {
+            LiteralValue::Integer(self.to_int() >> rhs.to_int() as uint)
+        } else {
+            LiteralValue::Null
+        }
+    }
+}
+
+
+
 pub struct TableDef {
     pub table_name: String,
     pub columns: Vec<ColumnDef>,
@@ -284,6 +322,10 @@ pub enum BinaryOperator {
     Modulo,
     Plus,
     Minus,
+    LShift,
+    RShift,
+    BitAnd,
+    BitOr,
     Less,
     LessEq,
     Greater,
@@ -296,9 +338,7 @@ pub enum BinaryOperator {
 
 impl PartialOrd for BinaryOperator {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if self.ord_val() < other.ord_val() { Some(Less) }
-        else if self.ord_val() > other.ord_val() { Some(Greater) }
-        else { Some(Equal) }
+        Some(self.ord_val().cmp(&other.ord_val()))
     }
 }
 
@@ -314,13 +354,15 @@ impl BinaryOperator {
     fn ord_val(&self) -> uint {
         match *self {
             BinaryOperator::Null => 0,
-            BinaryOperator::Mult | BinaryOperator::Divide | BinaryOperator::Modulo => 1,
-            BinaryOperator::Plus | BinaryOperator::Minus => 2,
+            BinaryOperator::Mult | BinaryOperator::Divide | BinaryOperator::Modulo => 2,
+            BinaryOperator::Plus | BinaryOperator::Minus => 3,
+            BinaryOperator::LShift | BinaryOperator::RShift
+                | BinaryOperator::BitAnd | BinaryOperator::BitOr => 4,
             BinaryOperator::Less | BinaryOperator::LessEq
-                | BinaryOperator::Greater | BinaryOperator::GreaterEq => 3,
-            BinaryOperator::Equals | BinaryOperator::NotEquals => 4,
-            BinaryOperator::And => 5,
-            BinaryOperator::Or => 6,
+                | BinaryOperator::Greater | BinaryOperator::GreaterEq => 5,
+            BinaryOperator::Equals | BinaryOperator::NotEquals => 6,
+            BinaryOperator::And => 7,
+            BinaryOperator::Or => 8,
         }
     }
 }
@@ -330,6 +372,7 @@ pub enum UnaryOperator {
     Plus,
     Minus,
     Not,
+    BitNeg,
 }
 
 impl UnaryOperator {

@@ -187,6 +187,8 @@ binary_operator -> BinaryOperator
             / plus { BinaryOperator::Plus }
             / minus { BinaryOperator::Minus }
             / not_equals { BinaryOperator::NotEquals }
+            / rshift { BinaryOperator::RShift }
+            / lshift { BinaryOperator::LShift }
             / le { BinaryOperator::LessEq }
             / lt { BinaryOperator::Less }
             / ge { BinaryOperator::GreaterEq }
@@ -194,12 +196,15 @@ binary_operator -> BinaryOperator
             / equals { BinaryOperator::Equals }
             / and { BinaryOperator::And }
             / or { BinaryOperator::Or }
+            / band { BinaryOperator::BitAnd }
+            / bor { BinaryOperator::BitOr }
         ) { b }
 
 unary_operator -> UnaryOperator
         = plus { UnaryOperator::Plus }
         / minus { UnaryOperator::Minus }
         / not { UnaryOperator::Not }
+        / bneg { UnaryOperator::BitNeg }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -224,6 +229,11 @@ lt = "<"
 gt = ">"
 le = "<="
 ge = ">="
+band = "&"
+bor = "|"
+bneg = "~"
+rshift = ">>"
+lshift = "<<"
 
 string_literal -> String
         = "\"" s:string "\"" { s }
