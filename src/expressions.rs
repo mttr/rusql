@@ -101,6 +101,26 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                             expr1: &Expression,
                             expr2: &Expression) -> ExpressionResult {
         match operator {
+            BinaryOperator::Less => {
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(expr2));
+                ExpressionResult::Value(left.lt(&right))
+            }
+            BinaryOperator::LessEq => {
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(expr2));
+                ExpressionResult::Value(left.le(&right))
+            }
+            BinaryOperator::Greater => {
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(expr2));
+                ExpressionResult::Value(left.gt(&right))
+            }
+            BinaryOperator::GreaterEq => {
+                let left = result_to_literal(self.eval_expr(expr1));
+                let right = result_to_literal(self.eval_expr(expr2));
+                ExpressionResult::Value(left.ge(&right))
+            }
             BinaryOperator::Equals => {
                 ExpressionResult::Value(LiteralValue::Boolean(self.eval_expr(expr1) == self.eval_expr(expr2)))
             }

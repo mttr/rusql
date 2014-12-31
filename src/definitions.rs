@@ -53,6 +53,60 @@ impl LiteralValue {
         }
     }
 
+    pub fn cmp(&self, other: &Self) -> Ordering {
+        if self.is_int() && other.is_int() {
+            let x = self.to_int();
+            let y = other.to_int();
+
+            return x.cmp(&y)
+
+            /*if x < y { return Less }
+            else if x > y { return Greater }
+            else { return Equal }*/
+        }
+
+        Equal
+    }
+
+    pub fn lt(&self, other: &Self) -> LiteralValue {
+        match self.cmp(other) {
+            Less => LiteralValue::Boolean(true),
+            Equal => LiteralValue::Boolean(false),
+            Greater => LiteralValue::Boolean(false),
+        }
+    }
+
+    pub fn le(&self, other: &Self) -> LiteralValue {
+        match self.cmp(other) {
+            Less => LiteralValue::Boolean(true),
+            Equal => LiteralValue::Boolean(true),
+            Greater => LiteralValue::Boolean(false),
+        }
+    }
+
+    pub fn gt(&self, other: &Self) -> LiteralValue {
+        match self.cmp(other) {
+            Less => LiteralValue::Boolean(false),
+            Equal => LiteralValue::Boolean(false),
+            Greater => LiteralValue::Boolean(true),
+        }
+    }
+
+    pub fn ge(&self, other: &Self) -> LiteralValue {
+        match self.cmp(other) {
+            Less => LiteralValue::Boolean(false),
+            Equal => LiteralValue::Boolean(true),
+            Greater => LiteralValue::Boolean(true),
+        }
+    }
+
+    pub fn is_int(&self) -> bool {
+        match self {
+            &LiteralValue::Integer(..) => true,
+            _ => false,
+        }
+    }
+
     pub fn neg(&self) -> LiteralValue {
         match self {
             &LiteralValue::Integer(i) => LiteralValue::Integer(-i),
@@ -230,6 +284,10 @@ pub enum BinaryOperator {
     Modulo,
     Plus,
     Minus,
+    Less,
+    LessEq,
+    Greater,
+    GreaterEq,
     Equals,
     NotEquals,
     And,
@@ -258,9 +316,11 @@ impl BinaryOperator {
             BinaryOperator::Null => 0,
             BinaryOperator::Mult | BinaryOperator::Divide | BinaryOperator::Modulo => 1,
             BinaryOperator::Plus | BinaryOperator::Minus => 2,
-            BinaryOperator::Equals | BinaryOperator::NotEquals => 3,
-            BinaryOperator::And => 4,
-            BinaryOperator::Or => 5,
+            BinaryOperator::Less | BinaryOperator::LessEq
+                | BinaryOperator::Greater | BinaryOperator::GreaterEq => 3,
+            BinaryOperator::Equals | BinaryOperator::NotEquals => 4,
+            BinaryOperator::And => 5,
+            BinaryOperator::Or => 6,
         }
     }
 }

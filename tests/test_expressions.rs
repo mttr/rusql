@@ -130,3 +130,23 @@ fn test_not() {
 fn test_multiple_boolean_ops() {
     test_expect_ints("SELECT 3=3 AND 4=4, (3=3) AND (4=4);", vec![1, 1]);
 }
+
+#[test]
+fn test_less_than() {
+    test_expect_ints("SELECT 3<4, 3<3, 3<2;", vec![1, 0, 0]);
+}
+
+#[test]
+fn test_less_than_or_eq() {
+    test_expect_ints("SELECT 3<=4, 3<=3, 3<=2;", vec![1, 1, 0]);
+}
+
+#[test]
+fn test_greater_than() {
+    test_expect_ints("SELECT 3>4, 3>3, 3>2;", vec![0, 0, 1]);
+}
+
+#[test]
+fn test_greater_than_or_eq() {
+    test_expect_ints("SELECT 3>=4, 3>=3, 3>=2;", vec![0, 1, 1]);
+}

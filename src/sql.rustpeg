@@ -186,8 +186,12 @@ binary_operator -> BinaryOperator
             / percent { BinaryOperator::Modulo }
             / plus { BinaryOperator::Plus }
             / minus { BinaryOperator::Minus }
-            / equals { BinaryOperator::Equals }
             / not_equals { BinaryOperator::NotEquals }
+            / le { BinaryOperator::LessEq }
+            / lt { BinaryOperator::Less }
+            / ge { BinaryOperator::GreaterEq }
+            / gt { BinaryOperator::Greater }
+            / equals { BinaryOperator::Equals }
             / and { BinaryOperator::And }
             / or { BinaryOperator::Or }
         ) { b }
@@ -216,6 +220,10 @@ percent = "%"
 and = whitespace "AND"
 not = whitespace "NOT"
 or = whitespace "OR"
+lt = "<"
+gt = ">"
+le = "<="
+ge = ">="
 
 string_literal -> String
         = "\"" s:string "\"" { s }
