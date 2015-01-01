@@ -2,6 +2,7 @@ use definitions::{LiteralValue, ColumnDef, ColumnConstraint};
 
 use std::collections::BTreeMap;
 use std::fmt;
+use std::iter::repeat;
 
 pub type TableRow = Vec<LiteralValue>;
 pub type TableHeader = Vec<ColumnDef>;
@@ -65,7 +66,7 @@ impl Table {
         for column_data in column_data.into_iter() {
             if let &Some(ref column_names) = specified_columns {
                 assert!(column_names.len() == column_data.len());
-                let mut row = Vec::from_elem(self.header.len(), LiteralValue::Null);
+                let mut row: TableRow = repeat(LiteralValue::Null).take(self.header.len()).collect();
 
                 for (name, data) in column_names.iter().zip(column_data.into_iter()) {
                     row[self.get_column_index(name).unwrap()] = data;
