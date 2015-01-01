@@ -279,6 +279,7 @@ pub struct SelectDef {
     pub result_column: ResultColumn,
     pub table_or_subquery: Option<Vec<String>>,
     pub where_expr: Option<Expression>,
+    pub ordering_terms: Option<Vec<OrderingTerm>>,
 }
 
 pub struct DropTableDef {
@@ -388,4 +389,16 @@ pub struct UpdateDef {
     pub name: String,
     pub set: Vec<(String, Expression)>,
     pub where_expr: Option<Expression>,
+}
+
+#[deriving(Clone)]
+pub struct OrderingTerm {
+    pub expr: Expression,
+    pub order: Order,
+}
+
+#[deriving(Copy, Clone)]
+pub enum Order {
+    Ascending,
+    Descending,
 }

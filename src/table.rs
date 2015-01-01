@@ -60,7 +60,7 @@ impl Table {
         }
     }
 
-    pub fn insert(&mut self, column_data: Vec<Vec<LiteralValue>>,
+    pub fn insert(&mut self, column_data: Vec<TableRow>,
                   specified_columns: &Option<Vec<String>>) {
         for column_data in column_data.into_iter() {
             if let &Some(ref column_names) = specified_columns {

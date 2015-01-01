@@ -311,3 +311,47 @@ fn test_select_header_length_asterisk() {
     let results = rusql_exec(&mut db, "SELECT * FROM Foo;", |_,_| {}).unwrap();
     assert_eq!(results.header.len(), 2);
 }
+
+#[test]
+fn test_select_order_by_asc() {
+    let mut db = Rusql::new();
+    let expected = vec![1, 2, 3, 4];
+    let mut results: Vec<int> = Vec::new();
+
+    let sql_str = "CREATE TABLE a(b INTEGER); \
+                   INSERT INTO a VALUES \
+                       (4), \
+                       (2), \
+                       (1), \
+                       (3); \
+                   SELECT * FROM a ORDER BY b;";
+    rusql_exec(&mut db, sql_str, |row,_| {
+        for column in row.iter() {
+            results.push(column.to_uint() as int);
+        }
+    });
+
+    assert_eq!(expected, results);
+}
+
+#[test]
+fn test_select_order_by_desc() {
+    let mut db = Rusql::new();
+    let expected = vec![4, 3, 2, 1];
+    let mut results: Vec<int> = Vec::new();
+
+    let sql_str = "CREATE TABLE a(b INTEGER); \
+                   INSERT INTO a VALUES \
+                       (4), \
+                       (2), \
+                       (1), \
+                       (3); \
+                   SELECT * FROM a ORDER BY b DESC;";
+    rusql_exec(&mut db, sql_str, |row,_| {
+        for column in row.iter() {
+            results.push(column.to_uint() as int);
+        }
+    });
+
+    assert_eq!(expected, results);
+}

@@ -25,6 +25,7 @@ pub struct ExpressionEvaluator<'a, 'b> {
     head: &'a TableHeader,
     tables: Option<Vec<&'b Table>>,
     get_column_def: bool,
+    as_column_alias: bool,
     order_pass: Cell<bool>,
 }
 
@@ -35,6 +36,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
             head: head,
             tables: None,
             get_column_def: false,
+            as_column_alias: false,
             order_pass: Cell::new(false),
         }
     }
@@ -46,6 +48,11 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
 
     pub fn with_tables(&'a mut self, tables: Vec<&'b Table>) -> &mut ExpressionEvaluator<'a, 'b> {
         self.tables = Some(tables);
+        self
+    }
+
+    pub fn as_column_alias(&'a mut self) -> &mut ExpressionEvaluator<'a, 'b> {
+        self.as_column_alias = true;
         self
     }
 
@@ -265,7 +272,13 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 }
             }
         } else {
-            return ExpressionResult::Value(get_column(name, self.row, self.head, offset));
+            if self.as_column_alias {
+                return ExpressionResult::Value(LiteralValue::Integer(
+                        // FIXME here I go with those blind unwraps again...
+                        self.head.iter().position(|ref cols| &cols.name == name).unwrap() as int));
+            } else {
+                return ExpressionResult::Value(get_column(name, self.row, self.head, offset));
+            }
         }
         ExpressionResult::Null
     }
@@ -285,7 +298,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
     }
 }
 
-fn result_to_literal(result: ExpressionResult) -> LiteralValue {
+pub fn result_to_literal(result: ExpressionResult) -> LiteralValue {
     match result {
         ExpressionResult::Value(v) => v,
         _ => LiteralValue::Null,

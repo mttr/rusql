@@ -121,11 +121,15 @@ insert_values -> Vec<LiteralValue>
 // https://www.sqlite.org/lang_select.html
 
 select_stmt -> RusqlStatement
-        = SELECT r:result_column t:(FROM t:(table_or_subquery ++ comma) { t })? w:where_expr? {
+        = SELECT r:result_column
+                t:(FROM t:(table_or_subquery ++ comma) { t })?
+                w:where_expr?
+                o:(ORDER BY o:(ordering_term ++ comma) { o })? {
             let def = SelectDef {
                 result_column: r,
                 table_or_subquery: t,
                 where_expr: w,
+                ordering_terms: o,
             };
             RusqlStatement::Select(def)
         }
@@ -136,6 +140,18 @@ result_column -> ResultColumn
 
 table_or_subquery -> String
         = table_name
+
+ordering_term -> OrderingTerm
+        = e:expr /*(COLLATE collation_name)?*/ o:asc_or_desc? {
+            OrderingTerm {
+                expr: e,
+                order: if let Some(order) = o { order } else { Order::Ascending }
+            }
+        }
+
+asc_or_desc -> Order
+        = ASC { Order::Ascending }
+        / DESC { Order::Descending }
 
 // UPDATE
 // https://www.sqlite.org/lang_update.html
@@ -250,15 +266,19 @@ SELECT = whitespace "SELECT"
 UPDATE = whitespace "UPDATE"
 
 ADD = whitespace1 "ADD"
+ASC = whitespace1 "ASC"
+BY = whitespace1 "BY"
 COLUMN = whitespace1 "COLUMN"
 CONSTRAINT = whitespace1 "CONSTRAINT"
 DEFAULT = whitespace1 "DEFAULT"
+DESC = whitespace1 "DESC"
 FROM = whitespace1 "FROM"
 TABLE = whitespace1 "TABLE"
 INTEGER = whitespace1 "INTEGER"
 INTO = whitespace1 "INTO"
 IS = whitespace1 "IS"
 KEY = whitespace1 "KEY"
+ORDER = whitespace1 "ORDER"
 PRIMARY = whitespace1 "PRIMARY"
 RENAME = whitespace1 "RENAME"
 SET = whitespace1 "SET"

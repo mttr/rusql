@@ -1,8 +1,8 @@
 use table::{TableRow, TableHeader, Table};
 use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
 use definitions::{AlterTableDef, AlterTable, Expression};
-use definitions::{DeleteDef, InsertDataSource, UpdateDef};
-use expressions::{ExpressionResult, ExpressionEvaluator, expr_to_literal};
+use definitions::{DeleteDef, InsertDataSource, UpdateDef, Order};
+use expressions::{ExpressionResult, ExpressionEvaluator, expr_to_literal, result_to_literal};
 use rusql::Rusql;
 
 peg_file! parser("sql.rustpeg");
@@ -161,6 +161,7 @@ fn generate_result_set(input_product: Table, input_tables: &Vec<&Table>, select_
     // https://www.sqlite.org/lang_select.html#resultset
     let results_header: TableHeader = Vec::new();
     let mut results_table = Table::new_result_table(results_header);
+    let mut rows: Vec<TableRow> = Vec::new();
 
     for row in input_product.data.values() {
         match select_def.result_column {
@@ -169,10 +170,42 @@ fn generate_result_set(input_product: Table, input_tables: &Vec<&Table>, select_
                 if results_table.header.len() == 0 {
                     results_table.header = input_product.header.clone();
                 }
-                results_table.push_row(row.clone());
+                rows.push(row.clone());
             }
         }
     }
+
+    if let Some(ref ordering_terms) = select_def.ordering_terms {
+        debug!("ORDER BY");
+        let mut ordering_terms = ordering_terms.clone();
+        ordering_terms.as_mut_slice().reverse();
+        for term in ordering_terms.iter() {
+            rows.as_mut_slice().sort_by(|a, b| {
+                // FIXME ... ugly.
+                match term.order {
+                    Order::Ascending => a[result_to_literal(
+                            ExpressionEvaluator::new(a, &results_table.header)
+                                                 .as_column_alias()
+                                                 .eval_expr(&term.expr)
+                        ).to_uint()].cmp(&b[result_to_literal(
+                            ExpressionEvaluator::new(b, &results_table.header)
+                                                 .as_column_alias()
+                                                 .eval_expr(&term.expr)
+                        ).to_uint()]),
+                    Order::Descending => b[result_to_literal(
+                            ExpressionEvaluator::new(b, &results_table.header)
+                                                 .as_column_alias()
+                                                 .eval_expr(&term.expr)
+                        ).to_uint()].cmp(&a[result_to_literal(
+                            ExpressionEvaluator::new(a, &results_table.header)
+                                                 .as_column_alias()
+                                                 .eval_expr(&term.expr)
+                        ).to_uint()]),
+                }
+            });
+        }
+    }
+    results_table.insert(rows, &None);
 
     results_table
 }
