@@ -85,7 +85,13 @@ fn update(db: &mut Rusql, update_def: UpdateDef) {
 
 fn product(tables: Vec<&Table>, input_product: &mut Table, new_row_opt: Option<TableRow>) {
     let mut remaining = tables.clone();
-    if let Some(table) = remaining.remove(0) {
+
+    if remaining.len() == 0 {
+        if let Some(new_row) = new_row_opt {
+            input_product.push_row(new_row);
+        }
+    } else {
+        let table = remaining.remove(0);
         for row in table.data.values() {
             let mut new_row: TableRow = if let Some(ref new_row) = new_row_opt {
                 new_row.clone()
@@ -96,10 +102,6 @@ fn product(tables: Vec<&Table>, input_product: &mut Table, new_row_opt: Option<T
             new_row.push_all(&*row.clone());
 
             product(remaining.clone(), input_product, Some(new_row));
-        }
-    } else {
-        if let Some(new_row) = new_row_opt {
-            input_product.push_row(new_row);
         }
     }
 }
