@@ -1,4 +1,7 @@
+use std::cmp::Ordering;
+use std::cmp::Ordering::*;
 use std::fmt;
+use std::ops::{Add, Sub, Mul, Div, Rem, BitAnd, BitOr, Shl, Shr};
 
 pub enum RusqlStatement {
     AlterTable(AlterTableDef),
@@ -10,18 +13,18 @@ pub enum RusqlStatement {
     Update(UpdateDef),
 }
 
-#[deriving(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum ColumnType {
     Integer,
     Text,
 }
 
-#[deriving(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum ColumnConstraint {
     PrimaryKey,
 }
 
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum LiteralValue {
     Integer(int),
     Text(String),
@@ -268,7 +271,7 @@ pub enum InsertDataSource {
     Error,
 }
 
-#[deriving(Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct ColumnDef {
     pub name: String,
     pub column_type: Option<ColumnType>,
@@ -296,7 +299,7 @@ pub struct AlterTableDef {
     pub mode: AlterTable,
 }
 
-#[deriving(Show, Clone)]
+#[derive(Show, Clone)]
 pub enum Expression {
     LiteralValue(LiteralValue),
     TableName((String, Box<Expression>)),
@@ -315,7 +318,7 @@ impl Expression {
     }
 }
 
-#[deriving(Copy, Show, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Show, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BinaryOperator {
     Null,
     Mult,
@@ -362,7 +365,7 @@ impl BinaryOperator {
     }
 }
 
-#[deriving(Copy, Show, Clone)]
+#[derive(Copy, Show, Clone)]
 pub enum UnaryOperator {
     Plus,
     Minus,
@@ -391,13 +394,13 @@ pub struct UpdateDef {
     pub where_expr: Option<Expression>,
 }
 
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct OrderingTerm {
     pub expr: Expression,
     pub order: Order,
 }
 
-#[deriving(Copy, Clone)]
+#[derive(Copy, Clone)]
 pub enum Order {
     Ascending,
     Descending,

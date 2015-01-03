@@ -3,7 +3,7 @@ use table::{Table, TableRow, TableHeader, get_column};
 
 use std::cell::Cell;
 
-#[deriving(PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
 pub enum ExpressionResult {
     Value(LiteralValue),
     ColumnDef(ColumnDef),
