@@ -251,6 +251,7 @@ impl Shr<LiteralValue, LiteralValue> for LiteralValue {
 pub struct TableDef {
     pub table_name: String,
     pub columns: Vec<ColumnDef>,
+    pub if_not_exists: bool,
 }
 
 pub enum ResultColumn {

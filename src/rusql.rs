@@ -29,6 +29,11 @@ impl Rusql {
     }
 
     pub fn create_table(&mut self, table_def: TableDef) {
+        if table_def.if_not_exists {
+            if self.map.contains_key(&table_def.table_name) {
+                return;
+            }
+        }
         let mut table = Table {
             name: table_def.table_name,
             header: table_def.columns,

@@ -44,10 +44,12 @@ add_column -> AlterTable
 // https://www.sqlite.org/lang_createtable.html
 
 create_table_stmt -> RusqlStatement
-        = CREATE TABLE n:table_name whitespace lparen c:(column_def ++ comma) rparen {
+        = CREATE TABLE i:(IF NOT EXISTS)?
+                n:table_name whitespace lparen c:(column_def ++ comma) rparen {
             let def = TableDef {
                 table_name: n,
                 columns: c,
+                if_not_exists: i.is_some(),
             };
             RusqlStatement::CreateTable(def)
           }
@@ -275,12 +277,15 @@ COLUMN = whitespace1 "COLUMN"
 CONSTRAINT = whitespace1 "CONSTRAINT"
 DEFAULT = whitespace1 "DEFAULT"
 DESC = whitespace1 "DESC"
+EXISTS = whitespace1 "EXISTS"
 FROM = whitespace1 "FROM"
 TABLE = whitespace1 "TABLE"
 INTEGER = whitespace1 "INTEGER"
 INTO = whitespace1 "INTO"
+IF = whitespace1 "IF"
 IS = whitespace1 "IS"
 KEY = whitespace1 "KEY"
+NOT = whitespace1 "NOT"
 ORDER = whitespace1 "ORDER"
 PRIMARY = whitespace1 "PRIMARY"
 RENAME = whitespace1 "RENAME"

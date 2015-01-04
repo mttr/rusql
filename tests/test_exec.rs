@@ -370,3 +370,13 @@ fn test_single_quote() {
 
     assert_eq!(expected, results);
 }
+
+#[test]
+fn test_if_not_exists() {
+    let mut db = init_db_with_table();
+    rusql_exec(&mut db, "CREATE TABLE IF NOT EXISTS Foo(Num INTEGER PRIMARY KEY, Nickname TEXT);", |_, _| {});
+
+    let table = db.map.get("Foo".as_slice()).unwrap();
+    assert!(table.get_column_def_by_name(&"Id".to_string()).is_some());
+    assert!(table.get_column_def_by_name(&"Name".to_string()).is_some());
+}
