@@ -19,7 +19,16 @@ fn readline(prompt: &str) -> Option<String> {
 pub fn main() {
     let mut db = Rusql::new();
     loop {
-        let input = readline("rusql> ").expect("Error reading line");
+        let mut input = readline("rusql> ").expect("Error reading line");
+
+        while !input.as_slice().trim_right().ends_with(";")
+                && !input.as_slice().trim_left().starts_with(".") {
+
+            let continuation = readline("  ...> ").expect("Error reading line");
+
+            input.push(' ');
+            input.push_str(continuation.as_slice());
+        }
 
         match input.as_slice() {
             ".make_foo" => {
