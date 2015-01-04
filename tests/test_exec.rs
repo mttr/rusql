@@ -355,3 +355,18 @@ fn test_select_order_by_desc() {
 
     assert_eq!(expected, results);
 }
+
+#[test]
+fn test_single_quote() {
+    let mut db = init_db_with_table();
+    let mut results: Vec<LiteralValue> = Vec::new();
+    let expected = vec![LiteralValue::Text("Bar".to_string())];
+    let sql_str = "INSERT INTO Foo VALUES(1, 'Bar'); \
+                   SELECT * FROM Foo;";
+
+    rusql_exec(&mut db, sql_str, |row, _| {
+        results.push(row[1].clone());
+    });
+
+    assert_eq!(expected, results);
+}

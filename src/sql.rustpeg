@@ -253,8 +253,11 @@ lshift = "<<"
 
 string_literal -> String
         = "\"" s:string "\"" { s }
+        / "'" s:string_sq "'" { s }
 string -> String
         = (escape_char / [^"])* { match_str.to_string() } //"// (syntax highlight fix)
+string_sq -> String
+        = (escape_char / [^'])* { match_str.to_string() }
 escape_char = "\\" .
 
 ALTER = whitespace "ALTER"
