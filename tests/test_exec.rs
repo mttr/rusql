@@ -129,7 +129,7 @@ fn test_insert_into_with_multiple_rows() {
         results.push(row[0].clone());
     });
 
-    assert!(results == expected);
+    assert_eq!(results, expected);
 }
 
 #[test]
@@ -379,4 +379,19 @@ fn test_if_not_exists() {
     let table = db.map.get("Foo".as_slice()).unwrap();
     assert!(table.get_column_def_by_name(&"Id".to_string()).is_some());
     assert!(table.get_column_def_by_name(&"Name".to_string()).is_some());
+}
+
+#[test]
+fn test_pk_auto_increment() {
+    let mut db = init_db_with_table();
+    let mut results: Vec<int> = Vec::new();
+    let expected = vec![1, 2, 3, 4];
+    let sql_str = "INSERT INTO Foo(Name) VALUES(\"Bar0\"), (\"Bar1\"), (\"Bar2\"), (\"Bar3\"); \
+                   SELECT * FROM Foo;";
+
+    rusql_exec(&mut db, sql_str, |row, _| {
+        results.push(row[0].to_int());
+    });
+
+    assert_eq!(expected, results);
 }

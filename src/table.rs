@@ -1,5 +1,7 @@
-use definitions::{LiteralValue, ColumnDef, ColumnConstraint};
+use definitions::{TableDef, LiteralValue, ColumnDef, ColumnConstraint};
 
+use std::cell::Cell;
+use std::cmp::max;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::iter::repeat;
@@ -16,15 +18,30 @@ pub struct Table {
     pub header: TableHeader,
     pub data: BTreeMap<PkType, TableRow>,
     pub pk: Option<PkType>,
+    pub max_pk: Cell<PkType>,
 }
 
 impl Table {
+    pub fn new(table_def: TableDef) -> Table {
+        let mut table = Table {
+            name: table_def.table_name,
+            header: table_def.columns,
+            data: BTreeMap::new(),
+            pk: None,
+            max_pk: Cell::new(0),
+        };
+        table.process_constraints();
+
+        table
+    }
+
     pub fn new_result_table(header: TableHeader) -> Table {
         Table {
             name: "".to_string(),
             header: header,
             data: BTreeMap::new(),
             pk: None,
+            max_pk: Cell::new(0),
         }
     }
     pub fn get_column_def_by_name(&self, name: &String) -> Option<&ColumnDef> {
@@ -72,6 +89,12 @@ impl Table {
                     row[self.get_column_index(name).unwrap()] = data;
                 }
 
+                if let Some(i) = self.pk {
+                    if row[i] == LiteralValue::Null {
+                        row[i] = LiteralValue::Integer((self.max_pk.get() + 1) as int);
+                    }
+                }
+
                 self.push_row(row);
             } else {
                 self.push_row(column_data);
@@ -82,10 +105,12 @@ impl Table {
     pub fn push_row(&mut self, row: TableRow) {
         if let Some(i) = self.pk {
             let pk = row[i].clone().to_uint();
+
+            self.max_pk.set(max(self.max_pk.get(), pk));
             self.data.insert(pk, row);
         } else {
-            let len = self.data.len();
-            self.data.insert(len, row);
+            self.max_pk.set(self.max_pk.get() + 1);
+            self.data.insert(self.max_pk.get(), row);
         }
     }
 

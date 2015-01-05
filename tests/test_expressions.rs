@@ -6,7 +6,7 @@ fn test(sql_str: &str, expected: Vec<LiteralValue>) {
     let mut db = Rusql::new();
     let result_table = rusql_exec(&mut db, sql_str, |_,_| {}).unwrap();
 
-    let results = result_table.data.get(&0).unwrap();
+    let results = result_table.data.get(&1).unwrap();
 
     assert_eq!(&expected, results);
 }
@@ -15,7 +15,7 @@ fn test_expect_ints(sql_str: &str, expected: Vec<int>) {
     let mut db = Rusql::new();
     let mut results: Vec<int> = Vec::new();
     let result_table = rusql_exec(&mut db, sql_str, |_,_| {}).unwrap();
-    let result_row = result_table.data.get(&0).unwrap();
+    let result_row = result_table.data.get(&1).unwrap();
 
     for column in result_row.iter() {
         results.push(column.to_int());

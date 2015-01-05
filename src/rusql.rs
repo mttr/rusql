@@ -34,13 +34,7 @@ impl Rusql {
                 return;
             }
         }
-        let mut table = Table {
-            name: table_def.table_name,
-            header: table_def.columns,
-            data: BTreeMap::new(),
-            pk: None,
-        };
-        table.process_constraints();
+        let table = Table::new(table_def);
         self.map.insert(table.name.clone(), table);
     }
 
