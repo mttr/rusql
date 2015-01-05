@@ -10,8 +10,8 @@ license = "MIT"
 homepage = "https://github.com/mttr/rusql"
 repository = "https://github.com/mttr/rusql.git"
 
-[dependencies]
-peg = "0.1.2"
+[dependencies.peg]
+git = "https://github.com/kevinmehall/rust-peg.git"
 
 [[bin]]
 name = "rusql"
