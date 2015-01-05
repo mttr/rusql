@@ -276,6 +276,17 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 return ExpressionResult::Value(LiteralValue::Integer(
                         // FIXME here I go with those blind unwraps again...
                         self.head.iter().position(|ref cols| &cols.name == name).unwrap() as int));
+            }
+            if let Some(table) = table {
+                return ExpressionResult::Value(get_column(name, self.row, &table.header, offset));
+            } else if let Some(ref tables) = self.tables {
+                let mut offset = 0u;
+                for table in tables.iter() {
+                    if let Some(_) = table.get_column_def_by_name(name) {
+                        return ExpressionResult::Value(get_column(name, self.row, &table.header, Some(offset)));
+                    }
+                    offset += table.header.len();
+                }
             } else {
                 return ExpressionResult::Value(get_column(name, self.row, self.head, offset));
             }

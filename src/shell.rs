@@ -34,7 +34,10 @@ pub fn main() {
             ".make_foo" => {
                 rusql_exec(&mut db, "CREATE TABLE Foo(Id INTEGER, Name TEXT);
                                      INSERT INTO Foo VALUES
-                                            (1, \"Foo1\"), (2, \"Foo2\"), (3, \"Foo3\");",
+                                            (1, \"Foo1\"), (2, \"Foo2\"), (3, \"Foo3\");
+                                     CREATE TABLE Qux(QuxId INTEGER PRIMARY KEY, Nick TEXT);
+                                     INSERT INTO Qux(Nick) VALUES
+                                            (\"Bar1\"), (\"Bar2\"), (\"Bar3\");",
                            |_, _| ());
             }
             _ => {

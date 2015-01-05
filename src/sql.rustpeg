@@ -124,17 +124,32 @@ insert_values -> Vec<LiteralValue>
 
 select_stmt -> RusqlStatement
         = SELECT r:result_column
-                t:(FROM t:(table_or_subquery ++ comma) { t })?
+                f:from_clause?
                 w:where_expr?
                 o:(ORDER BY o:(ordering_term ++ comma) { o })? {
             let def = SelectDef {
                 result_column: r,
-                table_or_subquery: t,
+                from_clause: f,
                 where_expr: w,
                 ordering_terms: o,
             };
             RusqlStatement::Select(def)
         }
+
+from_clause -> FromClause
+        = FROM t:table_or_subquery j:join_clause+ {
+            FromClause::JoinClause(t, Some(j))
+        }
+        / FROM t:(table_or_subquery ++ comma) { FromClause::TableOrSubquery(t) }
+
+join_operator -> JoinOperator
+        = JOIN { JoinOperator::Inner }
+
+join_clause -> (JoinOperator, String, JoinConstraint)
+        = j:join_operator t:table_or_subquery c:join_constraint { (j, t, c) }
+
+join_constraint -> JoinConstraint
+        = ON e:expr { JoinConstraint::On(e) }
 
 result_column -> ResultColumn
         = whitespace1 a:asterisk { ResultColumn::Asterisk }
@@ -279,6 +294,7 @@ DEFAULT = whitespace1 "DEFAULT"
 DESC = whitespace1 "DESC"
 EXISTS = whitespace1 "EXISTS"
 FROM = whitespace1 "FROM"
+JOIN = whitespace1 "JOIN"
 TABLE = whitespace1 "TABLE"
 INTEGER = whitespace1 "INTEGER"
 INTO = whitespace1 "INTO"
@@ -286,6 +302,7 @@ IF = whitespace1 "IF"
 IS = whitespace1 "IS"
 KEY = whitespace1 "KEY"
 NOT = whitespace1 "NOT"
+ON = whitespace1 "ON"
 ORDER = whitespace1 "ORDER"
 PRIMARY = whitespace1 "PRIMARY"
 RENAME = whitespace1 "RENAME"

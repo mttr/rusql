@@ -261,13 +261,13 @@ fn test_select_with_mutltiple_tables() {
 fn test_select_multiple_tables_with_specified_result_columns() {
     let mut db = Rusql::new();
 
-    let sql_str = "CREATE TABLE a(Num INTEGER); \
-                   CREATE TABLE b(Num INTEGER); \
-                   CREATE TABLE c(Num INTEGER); \
+    let sql_str = "CREATE TABLE a(NumA INTEGER); \
+                   CREATE TABLE b(NumB INTEGER); \
+                   CREATE TABLE c(NumC INTEGER); \
                    INSERT INTO a VALUES(1), (2), (3); \
                    INSERT INTO b VALUES(1), (2); \
                    INSERT INTO c VALUES(1); \
-                   SELECT c.Num, a.Num, b.Num FROM a, b, c;";
+                   SELECT c.NumC, a.NumA, b.NumB FROM a, b, c;";
 
     let expected = vec![vec![1, 1, 1],
                         vec![1, 1, 2],
@@ -394,4 +394,60 @@ fn test_pk_auto_increment() {
     });
 
     assert_eq!(expected, results);
+}
+
+#[test]
+fn test_select_multiple_tables_with_specified_unique_columns() {
+    let mut db = Rusql::new();
+
+    let sql_str = "CREATE TABLE a(NumA INTEGER); \
+                   CREATE TABLE b(NumB INTEGER); \
+                   CREATE TABLE c(NumC INTEGER); \
+                   INSERT INTO a VALUES(1), (2), (3); \
+                   INSERT INTO b VALUES(1), (2); \
+                   INSERT INTO c VALUES(1); \
+                   SELECT NumC, NumA, NumB FROM a, b, c;";
+
+    let expected = vec![vec![1, 1, 1],
+                        vec![1, 1, 2],
+                        vec![1, 2, 1],
+                        vec![1, 2, 2],
+                        vec![1, 3, 1],
+                        vec![1, 3, 2]];
+    let mut results: Vec<Vec<int>> = Vec::new();
+
+    rusql_exec(&mut db, sql_str, |row, _| {
+        let mut result_row: Vec<int> = Vec::new();
+        for column in row.iter() {
+            result_row.push(column.to_uint() as int);
+        }
+        results.push(result_row);
+    });
+
+    assert_eq!(results, expected);
+}
+
+#[test]
+fn test_select_multiple_tables_with_join() {
+    let mut db = Rusql::new();
+
+    let sql_str = "CREATE TABLE a(NumA INTEGER); \
+                   CREATE TABLE b(NumB INTEGER); \
+                   INSERT INTO a VALUES(1), (2), (3); \
+                   INSERT INTO b VALUES(1), (2); \
+                   SELECT NumA, NumB FROM a JOIN b ON a.NumA=b.NumB;";
+
+    let expected = vec![vec![1, 1],
+                        vec![2, 2]];
+    let mut results: Vec<Vec<int>> = Vec::new();
+
+    rusql_exec(&mut db, sql_str, |row, _| {
+        let mut result_row: Vec<int> = Vec::new();
+        for column in row.iter() {
+            result_row.push(column.to_uint() as int);
+        }
+        results.push(result_row);
+    });
+
+    assert_eq!(results, expected);
 }

@@ -1,7 +1,7 @@
 use table::{TableRow, TableHeader, Table};
 use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
-use definitions::{AlterTableDef, AlterTable, Expression};
-use definitions::{DeleteDef, InsertDataSource, UpdateDef, Order};
+use definitions::{AlterTableDef, AlterTable, Expression, FromClause};
+use definitions::{DeleteDef, InsertDataSource, UpdateDef, Order, JoinConstraint};
 use expressions::{ExpressionResult, ExpressionEvaluator, expr_to_literal, result_to_literal};
 use rusql::Rusql;
 
@@ -125,19 +125,58 @@ fn generate_inputs<'a>(db: &'a Rusql, input_tables: &mut Vec<&'a Table>, select_
     // https://www.sqlite.org/lang_select.html#fromclause
     let mut input_header: TableHeader = Vec::new();
 
-    if let Some(ref table_or_subquery) = select_def.table_or_subquery {
+    if let Some(ref from_clause) = select_def.from_clause {
+        // FIXME CLEANUP PLZ
+        match from_clause {
+            &FromClause::TableOrSubquery(ref table_or_subquery) => {
+                for name in table_or_subquery.iter() {
+                    let table = db.get_table(name);
+                    input_tables.push(table);
+                    input_header.push_all(&*table.header.clone());
+                }
 
-        for name in table_or_subquery.iter() {
-            let table = db.get_table(name);
-            input_tables.push(table);
-            input_header.push_all(&*table.header.clone());
+                let mut input_product = Table::new_result_table(input_header);
+
+                product(input_tables.clone(), &mut input_product, None);
+
+                input_product
+            },
+            &FromClause::JoinClause(ref name, ref join_clauses) => {
+                let table = db.get_table(name);
+                let mut constraints: Vec<&JoinConstraint> = Vec::new();
+                input_tables.push(table);
+                input_header.push_all(&*table.header.clone());
+
+                // FIXME join operator?!?! UNWRAP?!?
+                if let &Some(ref join_clauses) = join_clauses {
+                    for &(_, ref name, ref join_const) in join_clauses.iter() {
+                        let table = db.get_table(name);
+                        input_tables.push(table);
+                        input_header.push_all(&*table.header.clone());
+                        constraints.push(join_const);
+                    }
+                }
+
+                let mut input_product = Table::new_result_table(input_header);
+
+                product(input_tables.clone(), &mut input_product, None);
+
+                let header = input_product.header.clone();
+
+                for constraint in constraints.into_iter() {
+                    match constraint {
+                        &JoinConstraint::On(ref expr) => {
+                            input_product.delete_where(|row| {
+                                !ExpressionEvaluator::new(row, &header).with_tables(input_tables.clone())
+                                                                       .eval_bool(expr)
+                            });
+                        }
+                    }
+                }
+
+                input_product
+            },
         }
-
-        let mut input_product = Table::new_result_table(input_header);
-
-        product(input_tables.clone(), &mut input_product, None);
-
-        input_product
     } else {
        let mut input_product = Table::new_result_table(input_header);
        let empty_row: TableRow = Vec::new();

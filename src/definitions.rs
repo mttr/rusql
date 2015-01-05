@@ -281,7 +281,7 @@ pub struct ColumnDef {
 
 pub struct SelectDef {
     pub result_column: ResultColumn,
-    pub table_or_subquery: Option<Vec<String>>,
+    pub from_clause: Option<FromClause>,
     pub where_expr: Option<Expression>,
     pub ordering_terms: Option<Vec<OrderingTerm>>,
 }
@@ -405,4 +405,20 @@ pub struct OrderingTerm {
 pub enum Order {
     Ascending,
     Descending,
+}
+
+pub type JoinClause = (JoinOperator, String, JoinConstraint);
+
+pub enum FromClause {
+    TableOrSubquery(Vec<String>),
+    JoinClause(String, Option<Vec<JoinClause>>),
+}
+
+#[derive(Copy)]
+pub enum JoinOperator {
+    Inner,
+}
+
+pub enum JoinConstraint {
+    On(Expression),
 }
