@@ -144,9 +144,10 @@ from_clause -> FromClause
 
 join_operator -> JoinOperator
         = JOIN { JoinOperator::Inner }
+        / NATURAL JOIN { JoinOperator::Natural }
 
-join_clause -> (JoinOperator, String, JoinConstraint)
-        = j:join_operator t:table_or_subquery c:join_constraint { (j, t, c) }
+join_clause -> JoinClause
+        = j:join_operator t:table_or_subquery c:join_constraint? { (j, t, c) }
 
 join_constraint -> JoinConstraint
         = ON e:expr { JoinConstraint::On(e) }
@@ -295,18 +296,19 @@ DESC = whitespace1 "DESC"
 EXISTS = whitespace1 "EXISTS"
 FROM = whitespace1 "FROM"
 JOIN = whitespace1 "JOIN"
-TABLE = whitespace1 "TABLE"
 INTEGER = whitespace1 "INTEGER"
 INTO = whitespace1 "INTO"
 IF = whitespace1 "IF"
 IS = whitespace1 "IS"
 KEY = whitespace1 "KEY"
+NATURAL = whitespace1 "NATURAL"
 NOT = whitespace1 "NOT"
 ON = whitespace1 "ON"
 ORDER = whitespace1 "ORDER"
 PRIMARY = whitespace1 "PRIMARY"
 RENAME = whitespace1 "RENAME"
 SET = whitespace1 "SET"
+TABLE = whitespace1 "TABLE"
 TEXT = whitespace1 "TEXT"
 TO = whitespace1 "TO"
 VALUES = whitespace1 "VALUES"

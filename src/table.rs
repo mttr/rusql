@@ -13,6 +13,7 @@ pub type PkType = uint;
 pub struct RowFormat<'a>(pub &'a TableRow);
 pub struct HeaderFormat<'a>(pub &'a TableHeader);
 
+#[derive(PartialEq)]
 pub struct Table {
     pub name: String,
     pub header: TableHeader,

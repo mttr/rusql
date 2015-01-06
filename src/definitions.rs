@@ -407,7 +407,7 @@ pub enum Order {
     Descending,
 }
 
-pub type JoinClause = (JoinOperator, String, JoinConstraint);
+pub type JoinClause = (JoinOperator, String, Option<JoinConstraint>);
 
 pub enum FromClause {
     TableOrSubquery(Vec<String>),
@@ -417,8 +417,10 @@ pub enum FromClause {
 #[derive(Copy)]
 pub enum JoinOperator {
     Inner,
+    Natural,
 }
 
+#[derive(Clone)]
 pub enum JoinConstraint {
     On(Expression),
 }

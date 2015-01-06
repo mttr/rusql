@@ -1,7 +1,8 @@
 use table::{TableRow, TableHeader, Table};
 use definitions::{ResultColumn, RusqlStatement, InsertDef, SelectDef};
-use definitions::{AlterTableDef, AlterTable, Expression, FromClause};
+use definitions::{AlterTableDef, AlterTable, Expression, FromClause, JoinOperator};
 use definitions::{DeleteDef, InsertDataSource, UpdateDef, Order, JoinConstraint};
+use definitions::{BinaryOperator};
 use expressions::{ExpressionResult, ExpressionEvaluator, expr_to_literal, result_to_literal};
 use rusql::Rusql;
 
@@ -121,6 +122,34 @@ fn select(db: &mut Rusql, select_def: SelectDef, callback: |&TableRow, &TableHea
     results_table
 }
 
+fn natural_join(tables: &Vec<&Table>, constraints: &mut Vec<JoinConstraint>) {
+    // FIXME ...
+    let mut columns: Vec<(String, String, String)> = Vec::new();
+
+    for table in tables.iter() {
+        for other in tables.iter() {
+            if table == other {
+                continue;
+            }
+
+            for col in table.header.iter() {
+                for other_col in other.header.iter() {
+                    if col.name == other_col.name {
+                        columns.push((table.name.clone(), other.name.clone(), other_col.name.clone()));
+                    }
+                }
+            }
+        }
+    }
+
+    for (table1, table2, column_name) in columns.into_iter() {
+        constraints.push(JoinConstraint::On(
+                Expression::BinaryOperator((BinaryOperator::Equals,
+                    box Expression::TableName((table1, box Expression::ColumnName(column_name.clone()))),
+                    box Expression::TableName((table2, box Expression::ColumnName(column_name)))))));
+    }
+}
+
 fn generate_inputs<'a>(db: &'a Rusql, input_tables: &mut Vec<&'a Table>, select_def: &SelectDef) -> Table {
     // https://www.sqlite.org/lang_select.html#fromclause
     let mut input_header: TableHeader = Vec::new();
@@ -143,17 +172,24 @@ fn generate_inputs<'a>(db: &'a Rusql, input_tables: &mut Vec<&'a Table>, select_
             },
             &FromClause::JoinClause(ref name, ref join_clauses) => {
                 let table = db.get_table(name);
-                let mut constraints: Vec<&JoinConstraint> = Vec::new();
+                let mut constraints: Vec<JoinConstraint> = Vec::new();
                 input_tables.push(table);
                 input_header.push_all(&*table.header.clone());
 
-                // FIXME join operator?!?! UNWRAP?!?
                 if let &Some(ref join_clauses) = join_clauses {
-                    for &(_, ref name, ref join_const) in join_clauses.iter() {
+                    for &(ref join_operator, ref name, ref join_const) in join_clauses.iter() {
                         let table = db.get_table(name);
                         input_tables.push(table);
                         input_header.push_all(&*table.header.clone());
-                        constraints.push(join_const);
+
+                        if let &Some(ref constraint) = join_const {
+                            constraints.push(constraint.clone());
+                        }
+
+                        match join_operator {
+                            &JoinOperator::Natural => natural_join(input_tables, &mut constraints),
+                            _ => {}
+                        }
                     }
                 }
 
@@ -165,7 +201,7 @@ fn generate_inputs<'a>(db: &'a Rusql, input_tables: &mut Vec<&'a Table>, select_
 
                 for constraint in constraints.into_iter() {
                     match constraint {
-                        &JoinConstraint::On(ref expr) => {
+                        JoinConstraint::On(ref expr) => {
                             input_product.delete_where(|row| {
                                 !ExpressionEvaluator::new(row, &header).with_tables(input_tables.clone())
                                                                        .eval_bool(expr)

@@ -451,3 +451,28 @@ fn test_select_multiple_tables_with_join() {
 
     assert_eq!(results, expected);
 }
+
+#[test]
+fn test_select_multiple_tables_with_natural_join() {
+    let mut db = Rusql::new();
+
+    let sql_str = "CREATE TABLE a(NumA INTEGER);
+                   CREATE TABLE b(NumA INTEGER);
+                   INSERT INTO a VALUES(1), (2), (3);
+                   INSERT INTO b VALUES(1), (2);
+                   SELECT * FROM a NATURAL JOIN b;";
+
+    let expected = vec![vec![1, 1],
+                        vec![2, 2]];
+    let mut results: Vec<Vec<int>> = Vec::new();
+
+    rusql_exec(&mut db, sql_str, |row, _| {
+        let mut result_row: Vec<int> = Vec::new();
+        for column in row.iter() {
+            result_row.push(column.to_uint() as int);
+        }
+        results.push(result_row);
+    });
+
+    assert_eq!(results, expected);
+}
