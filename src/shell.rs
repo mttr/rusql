@@ -3,28 +3,36 @@ extern crate rusql;
 extern crate readline;
 
 #[cfg(not(feature = "no_readline"))]
-use readline::readline;
+use readline::{readline, add_history};
 use rusql::{rusql_exec, Rusql};
 
 #[cfg(feature = "no_readline")]
 use std::io;
 
 #[cfg(feature = "no_readline")]
-fn readline(prompt: &str) -> Option<String> {
+fn rl(prompt: &str) -> String {
     print!("{}", prompt);
 
-    io::stdin().read_line().ok()
+    io::stdin().read_line().ok().unwrap()
+}
+
+#[cfg(not(feature = "no_readline"))]
+fn rl(prompt: &str) -> String {
+    let res = readline(prompt).unwrap();
+    add_history(res.as_slice());
+
+    res
 }
 
 pub fn main() {
     let mut db = Rusql::new();
     loop {
-        let mut input = readline("rusql> ").unwrap();
+        let mut input = rl("rusql> ");
 
         while !input.as_slice().trim_right().ends_with(";")
                 && !input.as_slice().trim_left().starts_with(".") {
 
-            let continuation = readline("  ...> ").unwrap();
+            let continuation = rl("  ...> ");
 
             input.push(' ');
             input.push_str(continuation.as_slice());
