@@ -1,7 +1,7 @@
-#![feature(globs, phase)]
+#![feature(phase, plugin)]
 
-#[phase(plugin, link)] extern crate log;
-#[phase(plugin)] extern crate peg_syntax_ext;
+#[macro_use] extern crate log;
+#[plugin] extern crate peg_syntax_ext;
 
 pub use exec::rusql_exec;
 pub use definitions::{ColumnDef, LiteralValue};

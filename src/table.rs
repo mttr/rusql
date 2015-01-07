@@ -115,7 +115,7 @@ impl Table {
         }
     }
 
-    pub fn delete_where(&mut self, f: |row: &TableRow| -> bool) {
+    pub fn delete_where<F: Fn(&TableRow) -> bool>(&mut self, f: F) {
         let mut keys: Vec<PkType> = Vec::new();
 
         for (key, row) in self.data.iter() {

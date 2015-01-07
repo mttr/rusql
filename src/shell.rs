@@ -19,12 +19,12 @@ fn readline(prompt: &str) -> Option<String> {
 pub fn main() {
     let mut db = Rusql::new();
     loop {
-        let mut input = readline("rusql> ").expect("Error reading line");
+        let mut input = readline("rusql> ").unwrap();
 
         while !input.as_slice().trim_right().ends_with(";")
                 && !input.as_slice().trim_left().starts_with(".") {
 
-            let continuation = readline("  ...> ").expect("Error reading line");
+            let continuation = readline("  ...> ").unwrap();
 
             input.push(' ');
             input.push_str(continuation.as_slice());

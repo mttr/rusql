@@ -161,7 +161,8 @@ impl fmt::Show for LiteralValue {
     }
 }
 
-impl Add<LiteralValue, LiteralValue> for LiteralValue {
+impl Add for LiteralValue {
+    type Output = LiteralValue;
     fn add(self, rhs: LiteralValue) -> LiteralValue {
         match self {
             LiteralValue::Integer(i) => self.int_add(i, rhs),
@@ -170,7 +171,8 @@ impl Add<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
-impl Sub<LiteralValue, LiteralValue> for LiteralValue {
+impl Sub for LiteralValue {
+    type Output = LiteralValue;
     fn sub(self, rhs: LiteralValue) -> LiteralValue {
         match self {
             LiteralValue::Integer(i) => self.int_sub(i, rhs),
@@ -179,7 +181,8 @@ impl Sub<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
-impl Mul<LiteralValue, LiteralValue> for LiteralValue {
+impl Mul for LiteralValue {
+    type Output = LiteralValue;
     fn mul(self, rhs: LiteralValue) -> LiteralValue {
         match self {
             LiteralValue::Integer(i) => self.int_mul(i, rhs),
@@ -188,7 +191,8 @@ impl Mul<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
-impl Div<LiteralValue, LiteralValue> for LiteralValue {
+impl Div for LiteralValue {
+    type Output = LiteralValue;
     fn div(self, rhs: LiteralValue) -> LiteralValue {
         match self {
             LiteralValue::Integer(i) => self.int_div(i, rhs),
@@ -197,7 +201,8 @@ impl Div<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
-impl Rem<LiteralValue, LiteralValue> for LiteralValue {
+impl Rem for LiteralValue {
+    type Output = LiteralValue;
     fn rem(self, rhs: LiteralValue) -> LiteralValue {
         match self {
             LiteralValue::Integer(i) => self.int_rem(i, rhs),
@@ -206,7 +211,8 @@ impl Rem<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
-impl BitAnd<LiteralValue, LiteralValue> for LiteralValue {
+impl BitAnd for LiteralValue {
+    type Output = LiteralValue;
     fn bitand(self, rhs: LiteralValue) -> LiteralValue {
         if self.is_int() && rhs.is_int() {
             LiteralValue::Integer(self.to_int() & rhs.to_int())
@@ -216,7 +222,8 @@ impl BitAnd<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
-impl BitOr<LiteralValue, LiteralValue> for LiteralValue {
+impl BitOr for LiteralValue {
+    type Output = LiteralValue;
     fn bitor(self, rhs: LiteralValue) -> LiteralValue {
         if self.is_int() && rhs.is_int() {
             LiteralValue::Integer(self.to_int() | rhs.to_int())
@@ -226,7 +233,8 @@ impl BitOr<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
-impl Shl<LiteralValue, LiteralValue> for LiteralValue {
+impl Shl<LiteralValue> for LiteralValue {
+    type Output = LiteralValue;
     fn shl(self, rhs: LiteralValue) -> LiteralValue {
         if self.is_int() && rhs.is_int() {
             LiteralValue::Integer(self.to_int() << rhs.to_int() as uint)
@@ -236,7 +244,8 @@ impl Shl<LiteralValue, LiteralValue> for LiteralValue {
     }
 }
 
-impl Shr<LiteralValue, LiteralValue> for LiteralValue {
+impl Shr<LiteralValue> for LiteralValue {
+    type Output = LiteralValue;
     fn shr(self, rhs: LiteralValue) -> LiteralValue {
         if self.is_int() && rhs.is_int() {
             LiteralValue::Integer(self.to_int() >> rhs.to_int() as uint)

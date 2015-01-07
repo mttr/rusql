@@ -8,7 +8,7 @@ use rusql::Rusql;
 
 peg_file! parser("sql.rustpeg");
 
-pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableRow, &TableHeader|) -> Option<Table> {
+pub fn rusql_exec<F: FnMut(&TableRow, &TableHeader)>(db: &mut Rusql, sql_str: &str, mut callback: F) -> Option<Table> {
     match parser::rusql_parse(sql_str) {
         Ok(res) => {
             for stmt in res.into_iter() {
@@ -18,7 +18,7 @@ pub fn rusql_exec(db: &mut Rusql, sql_str: &str, callback: |&TableRow, &TableHea
                     RusqlStatement::Delete(delete_def) => delete(db, delete_def),
                     RusqlStatement::DropTable(drop_table_def) => db.drop_table(&drop_table_def.name),
                     RusqlStatement::Insert(insert_def) => insert(db, insert_def),
-                    RusqlStatement::Select(select_def) => return Some(select(db, select_def, |a, b| callback(a, b))),
+                    RusqlStatement::Select(select_def) => return Some(select(db, select_def, callback)),
                     RusqlStatement::Update(update_def) => update(db, update_def),
                 }
             }
@@ -107,7 +107,7 @@ fn product(tables: Vec<&Table>, input_product: &mut Table, new_row_opt: Option<T
     }
 }
 
-fn select(db: &mut Rusql, select_def: SelectDef, callback: |&TableRow, &TableHeader|) -> Table {
+fn select<F: FnMut(&TableRow, &TableHeader)>(db: &mut Rusql, select_def: SelectDef, mut callback: F) -> Table {
     let mut input_tables: Vec<&Table> = Vec::new();
     let mut input_product = generate_inputs(db, &mut input_tables, &select_def);
 
