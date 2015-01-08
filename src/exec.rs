@@ -8,7 +8,7 @@ use rusql::Rusql;
 
 peg_file! parser("sql.rustpeg");
 
-pub fn rusql_exec<F: FnMut(&TableRow, &TableHeader)>(db: &mut Rusql, sql_str: &str, mut callback: F) -> Option<Table> {
+pub fn rusql_exec<F: FnMut(&TableRow, &TableHeader)>(db: &mut Rusql, sql_str: &str, callback: F) -> Option<Table> {
     match parser::rusql_parse(sql_str) {
         Ok(res) => {
             for stmt in res.into_iter() {
