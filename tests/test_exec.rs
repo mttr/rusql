@@ -1,3 +1,6 @@
+#![feature(int_uint)]
+#![allow(unstable)]
+
 extern crate rusql;
 
 use rusql::{rusql_exec, Rusql, LiteralValue};

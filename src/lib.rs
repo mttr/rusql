@@ -1,4 +1,5 @@
-#![feature(plugin, box_syntax)]
+#![feature(plugin, box_syntax, int_uint)]
+#![allow(unstable)]
 
 #[macro_use] extern crate log;
 #[plugin] extern crate peg_syntax_ext;

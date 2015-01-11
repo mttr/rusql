@@ -1,3 +1,5 @@
+#![allow(unstable)]
+
 extern crate rusql;
 #[cfg(not(feature = "no_readline"))]
 extern crate readline;
