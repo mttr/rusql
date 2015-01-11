@@ -24,7 +24,7 @@ pub enum ColumnConstraint {
     PrimaryKey,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Show, Clone, PartialEq)]
 pub enum LiteralValue {
     Integer(int),
     Text(String),
@@ -149,7 +149,7 @@ impl LiteralValue {
     }
 }
 
-impl fmt::Show for LiteralValue {
+impl fmt::String for LiteralValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &LiteralValue::Integer(ref i) => write!(f, "{}", i),

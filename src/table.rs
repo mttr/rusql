@@ -145,7 +145,7 @@ impl Table {
     }
 }
 
-impl<'a> fmt::Show for RowFormat<'a> {
+impl<'a> fmt::String for RowFormat<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for column in self.0.iter() {
             write!(f, "{} | ", column).ok();
@@ -154,7 +154,7 @@ impl<'a> fmt::Show for RowFormat<'a> {
     }
 }
 
-impl<'a> fmt::Show for HeaderFormat<'a> {
+impl<'a> fmt::String for HeaderFormat<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for def in self.0.iter() {
             write!(f, "{} | ", def.name).ok();
@@ -163,7 +163,7 @@ impl<'a> fmt::Show for HeaderFormat<'a> {
     }
 }
 
-impl fmt::Show for Table {
+impl fmt::String for Table {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.header.len() > 0 {
             writeln!(f, "{}", HeaderFormat(&self.header)).ok();

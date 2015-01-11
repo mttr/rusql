@@ -1,4 +1,4 @@
-#![feature(phase, plugin)]
+#![feature(plugin, box_syntax)]
 
 #[macro_use] extern crate log;
 #[plugin] extern crate peg_syntax_ext;

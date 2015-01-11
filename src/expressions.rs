@@ -92,9 +92,9 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
             &Expression::TableName(..) | &Expression::ColumnName(..) => self.eval_column_name(expr, None, None),
             &Expression::BinaryOperator((b, ref expr1, ref expr2)) =>  {
                 if !self.order_pass.get() {
-                    debug!("order_of_op before: {}", expr);
+                    debug!("order_of_op before: {:?}", expr);
                     let expr = self.order_of_operations(expr);
-                    debug!("order_of_op after: {}", expr);
+                    debug!("order_of_op after: {:?}", expr);
                     self.order_pass.set(true);
                     self.eval_expr(&expr)
                 } else {
@@ -180,31 +180,31 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
                 ExpressionResult::Value(LiteralValue::Boolean(left.to_bool() || right.to_bool()))
             }
             BinaryOperator::Plus => {
-                debug!("{} + {}", expr1, expr2);
+                debug!("{:?} + {:?}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(expr2));
                 ExpressionResult::Value(left + right)
             }
             BinaryOperator::Minus => {
-                debug!("{} - {}", expr1, expr2);
+                debug!("{:?} - {:?}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(&self.neg(expr2)));
                 ExpressionResult::Value(left + right)
             }
             BinaryOperator::Mult => {
-                debug!("{} * {}", expr1, expr2);
+                debug!("{:?} * {:?}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(expr2));
                 ExpressionResult::Value(left * right)
             }
             BinaryOperator::Divide => {
-                debug!("{} / {}", expr1, expr2);
+                debug!("{:?} / {:?}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(expr2));
                 ExpressionResult::Value(left / right)
             }
             BinaryOperator::Modulo => {
-                debug!("{} % {}", expr1, expr2);
+                debug!("{:?} % {:?}", expr1, expr2);
                 let left = result_to_literal(self.eval_expr(expr1));
                 let right = result_to_literal(self.eval_expr(expr2));
                 ExpressionResult::Value(left % right)
@@ -214,7 +214,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
     }
 
     fn eval_unary_operator(&'a self, operator: UnaryOperator, expr: &Expression) -> ExpressionResult {
-        debug!("{}", expr);
+        debug!("{:?}", expr);
         match operator {
             UnaryOperator::Plus => self.eval_expr(expr),
             UnaryOperator::Minus => self.eval_expr(expr).neg(),
