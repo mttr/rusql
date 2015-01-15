@@ -1,4 +1,3 @@
-#![feature(int_uint)]
 #![allow(unstable)]
 
 extern crate rusql;
@@ -149,7 +148,7 @@ fn test_delete_all() {
 fn test_delete_with() {
     let mut db = init_db_and_insert_into_table();
     let expected = vec![1, 2, 4];
-    let mut results: Vec<int> = Vec::new();
+    let mut results: Vec<isize> = Vec::new();
 
     let sql_str = "DELETE FROM Foo WHERE Id=3; \
                    SELECT * FROM Foo;";
@@ -222,12 +221,12 @@ fn test_select_multiple_tables() {
                         vec![2, 2, 1],
                         vec![3, 1, 1],
                         vec![3, 2, 1]];
-    let mut results: Vec<Vec<int>> = Vec::new();
+    let mut results: Vec<Vec<isize>> = Vec::new();
 
     rusql_exec(&mut db, sql_str, |row, _| {
-        let mut result_row: Vec<int> = Vec::new();
+        let mut result_row: Vec<isize> = Vec::new();
         for column in row.iter() {
-            result_row.push(column.to_uint() as int);
+            result_row.push(column.to_uint() as isize);
         }
         results.push(result_row);
     });
@@ -247,12 +246,12 @@ fn test_select_with_mutltiple_tables() {
 
     let expected = vec![vec![1, 1],
                         vec![2, 2]];
-    let mut results: Vec<Vec<int>> = Vec::new();
+    let mut results: Vec<Vec<isize>> = Vec::new();
 
     rusql_exec(&mut db, sql_str, |row, _| {
-        let mut result_row: Vec<int> = Vec::new();
+        let mut result_row: Vec<isize> = Vec::new();
         for column in row.iter() {
-            result_row.push(column.to_uint() as int);
+            result_row.push(column.to_uint() as isize);
         }
         results.push(result_row);
     });
@@ -278,12 +277,12 @@ fn test_select_multiple_tables_with_specified_result_columns() {
                         vec![1, 2, 2],
                         vec![1, 3, 1],
                         vec![1, 3, 2]];
-    let mut results: Vec<Vec<int>> = Vec::new();
+    let mut results: Vec<Vec<isize>> = Vec::new();
 
     rusql_exec(&mut db, sql_str, |row, _| {
-        let mut result_row: Vec<int> = Vec::new();
+        let mut result_row: Vec<isize> = Vec::new();
         for column in row.iter() {
-            result_row.push(column.to_uint() as int);
+            result_row.push(column.to_uint() as isize);
         }
         results.push(result_row);
     });
@@ -319,7 +318,7 @@ fn test_select_header_length_asterisk() {
 fn test_select_order_by_asc() {
     let mut db = Rusql::new();
     let expected = vec![1, 2, 3, 4];
-    let mut results: Vec<int> = Vec::new();
+    let mut results: Vec<isize> = Vec::new();
 
     let sql_str = "CREATE TABLE a(b INTEGER); \
                    INSERT INTO a VALUES \
@@ -330,7 +329,7 @@ fn test_select_order_by_asc() {
                    SELECT * FROM a ORDER BY b;";
     rusql_exec(&mut db, sql_str, |row,_| {
         for column in row.iter() {
-            results.push(column.to_uint() as int);
+            results.push(column.to_uint() as isize);
         }
     });
 
@@ -341,7 +340,7 @@ fn test_select_order_by_asc() {
 fn test_select_order_by_desc() {
     let mut db = Rusql::new();
     let expected = vec![4, 3, 2, 1];
-    let mut results: Vec<int> = Vec::new();
+    let mut results: Vec<isize> = Vec::new();
 
     let sql_str = "CREATE TABLE a(b INTEGER); \
                    INSERT INTO a VALUES \
@@ -352,7 +351,7 @@ fn test_select_order_by_desc() {
                    SELECT * FROM a ORDER BY b DESC;";
     rusql_exec(&mut db, sql_str, |row,_| {
         for column in row.iter() {
-            results.push(column.to_uint() as int);
+            results.push(column.to_uint() as isize);
         }
     });
 
@@ -387,7 +386,7 @@ fn test_if_not_exists() {
 #[test]
 fn test_pk_auto_increment() {
     let mut db = init_db_with_table();
-    let mut results: Vec<int> = Vec::new();
+    let mut results: Vec<isize> = Vec::new();
     let expected = vec![1, 2, 3, 4];
     let sql_str = "INSERT INTO Foo(Name) VALUES(\"Bar0\"), (\"Bar1\"), (\"Bar2\"), (\"Bar3\"); \
                    SELECT * FROM Foo;";
@@ -417,12 +416,12 @@ fn test_select_multiple_tables_with_specified_unique_columns() {
                         vec![1, 2, 2],
                         vec![1, 3, 1],
                         vec![1, 3, 2]];
-    let mut results: Vec<Vec<int>> = Vec::new();
+    let mut results: Vec<Vec<isize>> = Vec::new();
 
     rusql_exec(&mut db, sql_str, |row, _| {
-        let mut result_row: Vec<int> = Vec::new();
+        let mut result_row: Vec<isize> = Vec::new();
         for column in row.iter() {
-            result_row.push(column.to_uint() as int);
+            result_row.push(column.to_uint() as isize);
         }
         results.push(result_row);
     });
@@ -442,12 +441,12 @@ fn test_select_multiple_tables_with_join() {
 
     let expected = vec![vec![1, 1],
                         vec![2, 2]];
-    let mut results: Vec<Vec<int>> = Vec::new();
+    let mut results: Vec<Vec<isize>> = Vec::new();
 
     rusql_exec(&mut db, sql_str, |row, _| {
-        let mut result_row: Vec<int> = Vec::new();
+        let mut result_row: Vec<isize> = Vec::new();
         for column in row.iter() {
-            result_row.push(column.to_uint() as int);
+            result_row.push(column.to_uint() as isize);
         }
         results.push(result_row);
     });
@@ -467,12 +466,12 @@ fn test_select_multiple_tables_with_natural_join() {
 
     let expected = vec![vec![1, 1],
                         vec![2, 2]];
-    let mut results: Vec<Vec<int>> = Vec::new();
+    let mut results: Vec<Vec<isize>> = Vec::new();
 
     rusql_exec(&mut db, sql_str, |row, _| {
-        let mut result_row: Vec<int> = Vec::new();
+        let mut result_row: Vec<isize> = Vec::new();
         for column in row.iter() {
-            result_row.push(column.to_uint() as int);
+            result_row.push(column.to_uint() as isize);
         }
         results.push(result_row);
     });

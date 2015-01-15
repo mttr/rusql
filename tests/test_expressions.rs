@@ -1,4 +1,3 @@
-#![feature(int_uint)]
 #![allow(unstable)]
 
 extern crate rusql;
@@ -14,9 +13,9 @@ fn test(sql_str: &str, expected: Vec<LiteralValue>) {
     assert_eq!(&expected, results);
 }
 
-fn test_expect_ints(sql_str: &str, expected: Vec<int>) {
+fn test_expect_ints(sql_str: &str, expected: Vec<isize>) {
     let mut db = Rusql::new();
-    let mut results: Vec<int> = Vec::new();
+    let mut results: Vec<isize> = Vec::new();
     let result_table = rusql_exec(&mut db, sql_str, |_,_| {}).unwrap();
     let result_row = result_table.data.get(&1).unwrap();
 

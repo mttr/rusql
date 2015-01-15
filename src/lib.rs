@@ -1,4 +1,4 @@
-#![feature(plugin, box_syntax, int_uint)]
+#![feature(plugin, box_syntax)]
 #![allow(unstable)]
 
 #[macro_use] extern crate log;

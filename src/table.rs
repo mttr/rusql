@@ -8,7 +8,7 @@ use std::iter::repeat;
 
 pub type TableRow = Vec<LiteralValue>;
 pub type TableHeader = Vec<ColumnDef>;
-pub type PkType = uint;
+pub type PkType = usize;
 
 pub struct RowFormat<'a>(pub &'a TableRow);
 pub struct HeaderFormat<'a>(pub &'a TableHeader);
@@ -49,7 +49,7 @@ impl Table {
         self.header.iter().find(|&cols| &cols.name == name)
     }
 
-    pub fn get_column_index(&self, name: &String) -> Option<uint> {
+    pub fn get_column_index(&self, name: &String) -> Option<usize> {
         self.header.iter().position(|ref cols| &cols.name == name)
     }
 
@@ -92,7 +92,7 @@ impl Table {
 
                 if let Some(i) = self.pk {
                     if row[i] == LiteralValue::Null {
-                        row[i] = LiteralValue::Integer((self.max_pk.get() + 1) as int);
+                        row[i] = LiteralValue::Integer((self.max_pk.get() + 1) as isize);
                     }
                 }
 
@@ -175,7 +175,7 @@ impl fmt::String for Table {
     }
 }
 
-pub fn get_column(name: &String, row: &TableRow, head: &TableHeader, offset: Option<uint>) -> LiteralValue {
+pub fn get_column(name: &String, row: &TableRow, head: &TableHeader, offset: Option<usize>) -> LiteralValue {
     let x = if let Some(x) = offset { x } else { 0 };
     row[head.iter().position(|ref def| def.name == *name).unwrap() + x].clone()
 }

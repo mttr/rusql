@@ -332,5 +332,5 @@ type_name -> ColumnType
         / TEXT { ColumnType::Text }
 
 literal_value -> LiteralValue
-        = whitespace ([0-9]+ { LiteralValue::Integer(match_str.parse::<int>().unwrap()) })
+        = whitespace ([0-9]+ { LiteralValue::Integer(match_str.parse::<isize>().unwrap()) })
         / whitespace (s:string_literal { LiteralValue::Text(s) })

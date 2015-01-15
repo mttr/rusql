@@ -229,11 +229,11 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         }
     }
 
-    fn eval_column_name(&'a self, expr: &Expression, table: Option<&Table>, offset: Option<uint>) -> ExpressionResult {
+    fn eval_column_name(&'a self, expr: &Expression, table: Option<&Table>, offset: Option<usize>) -> ExpressionResult {
         match expr {
             &Expression::TableName((ref name, ref expr)) => {
                 let mut table_opt: Option<&Table> = None;
-                let mut offset = 0u;
+                let mut offset = 0us;
 
                 for table in self.tables.clone().unwrap().into_iter() {
                     if &table.name == name {
@@ -253,7 +253,7 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
         }
     }
 
-    fn column_data_or_def(&'a self, name: &String, table: Option<&Table>, offset: Option<uint>) -> ExpressionResult {
+    fn column_data_or_def(&'a self, name: &String, table: Option<&Table>, offset: Option<usize>) -> ExpressionResult {
         if self.get_column_def {
             if let Some(table) = table {
                 // We know which table to grab the def from...
@@ -275,12 +275,12 @@ impl<'a, 'b> ExpressionEvaluator<'a, 'b> {
             if self.as_column_alias {
                 return ExpressionResult::Value(LiteralValue::Integer(
                         // FIXME here I go with those blind unwraps again...
-                        self.head.iter().position(|ref cols| &cols.name == name).unwrap() as int));
+                        self.head.iter().position(|ref cols| &cols.name == name).unwrap() as isize));
             }
             if let Some(table) = table {
                 return ExpressionResult::Value(get_column(name, self.row, &table.header, offset));
             } else if let Some(ref tables) = self.tables {
-                let mut offset = 0u;
+                let mut offset = 0us;
                 for table in tables.iter() {
                     if let Some(_) = table.get_column_def_by_name(name) {
                         return ExpressionResult::Value(get_column(name, self.row, &table.header, Some(offset)));

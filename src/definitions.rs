@@ -26,7 +26,7 @@ pub enum ColumnConstraint {
 
 #[derive(Show, Clone, PartialEq)]
 pub enum LiteralValue {
-    Integer(int),
+    Integer(isize),
     Text(String),
     Real(f64),
     Boolean(bool),
@@ -34,13 +34,13 @@ pub enum LiteralValue {
 }
 
 impl LiteralValue {
-    pub fn to_uint(&self) -> uint {
+    pub fn to_uint(&self) -> usize {
         match self {
-            &LiteralValue::Integer(i) => i as uint,
+            &LiteralValue::Integer(i) => i as usize,
             _ => 0, // FIXME ???
         }
     }
-    pub fn to_int(&self) -> int {
+    pub fn to_int(&self) -> isize {
         match self {
             &LiteralValue::Integer(i) => i,
             &LiteralValue::Boolean(b) => if b { 1 } else { 0 },
@@ -113,35 +113,35 @@ impl LiteralValue {
         }
     }
 
-    fn int_add(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+    fn int_add(&self, x: isize, rhs: LiteralValue) -> LiteralValue {
         match rhs {
             LiteralValue::Integer(i) => LiteralValue::Integer(x + i),
             _ => LiteralValue::Null,
         }
     }
 
-    fn int_sub(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+    fn int_sub(&self, x: isize, rhs: LiteralValue) -> LiteralValue {
         match rhs {
             LiteralValue::Integer(i) => LiteralValue::Integer(x - i),
             _ => LiteralValue::Null,
         }
     }
 
-    fn int_mul(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+    fn int_mul(&self, x: isize, rhs: LiteralValue) -> LiteralValue {
         match rhs {
             LiteralValue::Integer(i) => LiteralValue::Integer(x * i),
             _ => LiteralValue::Null,
         }
     }
 
-    fn int_div(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+    fn int_div(&self, x: isize, rhs: LiteralValue) -> LiteralValue {
         match rhs {
             LiteralValue::Integer(i) => LiteralValue::Integer(x / i),
             _ => LiteralValue::Null,
         }
     }
 
-    fn int_rem(&self, x: int, rhs: LiteralValue) -> LiteralValue {
+    fn int_rem(&self, x: isize, rhs: LiteralValue) -> LiteralValue {
         match rhs {
             LiteralValue::Integer(i) => LiteralValue::Integer(x % i),
             _ => LiteralValue::Null,
@@ -237,7 +237,7 @@ impl Shl<LiteralValue> for LiteralValue {
     type Output = LiteralValue;
     fn shl(self, rhs: LiteralValue) -> LiteralValue {
         if self.is_int() && rhs.is_int() {
-            LiteralValue::Integer(self.to_int() << rhs.to_int() as uint)
+            LiteralValue::Integer(self.to_int() << rhs.to_int() as usize)
         } else {
             LiteralValue::Null
         }
@@ -248,7 +248,7 @@ impl Shr<LiteralValue> for LiteralValue {
     type Output = LiteralValue;
     fn shr(self, rhs: LiteralValue) -> LiteralValue {
         if self.is_int() && rhs.is_int() {
-            LiteralValue::Integer(self.to_int() >> rhs.to_int() as uint)
+            LiteralValue::Integer(self.to_int() >> rhs.to_int() as usize)
         } else {
             LiteralValue::Null
         }
@@ -359,7 +359,7 @@ impl BinaryOperator {
         }
     }
 
-    pub fn ord_val(&self) -> uint {
+    pub fn ord_val(&self) -> usize {
         match *self {
             BinaryOperator::Null => 0,
             BinaryOperator::Mult | BinaryOperator::Divide | BinaryOperator::Modulo => 2,
